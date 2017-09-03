@@ -1,6 +1,7 @@
 const Klondike = require('../Klondike');
 const Mockdike = require('./mock/Klondike.mock');
 const prettyjson = require('prettyjson');
+const gameStates = require('./stub/Klondike.games');
 
 // suit order: 0=c 1=d 2=h 3=s
 
@@ -228,7 +229,7 @@ describe('Klondike', () => {
   });
 
   test('can parse game with all known values', () => {
-    const gameState = Mockdike.createGame(aceCanMoveToFoundationEverythingKnown, 1);
+    const gameState = Mockdike.createGame(gameStates.aceCanMoveToFoundationEverythingKnown, 1);
 
     Klondike.setStringRepresentation(gameState);
 
@@ -236,7 +237,7 @@ describe('Klondike', () => {
   });
 
   test('can parse game with unknown values', () => {
-    const gameState = Mockdike.createGame(aceCanMoveToFoundation, 1);
+    const gameState = Mockdike.createGame(gameStates.aceCanMoveToFoundation, 1);
 
     expect(gameState.stateScore).toBe(25);
   });
@@ -256,7 +257,7 @@ describe('Klondike', () => {
 
   test('string representation created for completely known game', () => {
     // create a draw-1 game
-    const gameState = Mockdike.createGame(aceCanMoveToFoundationEverythingKnown, 1);
+    const gameState = Mockdike.createGame(gameStates.aceCanMoveToFoundationEverythingKnown, 1);
 
     expect(gameState.stringRepresentation).toBe('');
 
@@ -264,13 +265,13 @@ describe('Klondike', () => {
     Klondike.setStringRepresentation(gameState);
 
     expect(gameState.stringRepresentation.trim().replace(/^\s*(.*?)$/gm, '$1')).toBe(
-      aceCanMoveToFoundationEverythingKnown.trim().replace(/^\s*(.*?)$/gm, '$1')
+      gameStates.aceCanMoveToFoundationEverythingKnown.trim().replace(/^\s*(.*?)$/gm, '$1')
     );
   });
 
   test('string representation created for known game with unknown values', () => {
     // create a draw-1 game
-    const gameState = Mockdike.createGame(aceCanMoveToFoundation, 1);
+    const gameState = Mockdike.createGame(gameStates.aceCanMoveToFoundation, 1);
 
     expect(gameState.stringRepresentation).toBe('');
 
@@ -278,7 +279,7 @@ describe('Klondike', () => {
     Klondike.setStringRepresentation(gameState);
 
     expect(gameState.stringRepresentation.trim().replace(/^\s*(.*?)$/gm, '$1')).toBe(
-      aceCanMoveToFoundation.trim().replace(/^\s*(.*?)$/gm, '$1')
+      gameStates.aceCanMoveToFoundation.trim().replace(/^\s*(.*?)$/gm, '$1')
     );
   });
 
@@ -324,7 +325,7 @@ describe('Klondike', () => {
 
   test('setting the foundation suits on empty foundations assigns expected suits', () => {
     // get a known gameState
-    var testState1 = Mockdike.createGame(knownFoundationOrder, 1);
+    var testState1 = Mockdike.createGame(gameStates.knownFoundationOrder, 1);
 
     testState1.foundationSuits = undefined;
 
@@ -339,7 +340,7 @@ describe('Klondike', () => {
 
   test('setting the foundation suits on non-empty foundations assigns expected suits', () => {
     // get a known gameState
-    var testState2 = Mockdike.createGame(knownFoundationOrder2, 1);
+    var testState2 = Mockdike.createGame(gameStates.knownFoundationOrder2, 1);
 
     testState2.foundationSuits = undefined;
 
@@ -362,7 +363,7 @@ describe('Klondike', () => {
 
   test('lowest foundation value on known game should be correct', () => {
     // get a known gameState
-    var testState1 = Mockdike.createGame(knownFoundationOrder, 1);
+    var testState1 = Mockdike.createGame(gameStates.knownFoundationOrder, 1);
 
     testState1.lowestFoundationValue = -1;
 
@@ -374,7 +375,7 @@ describe('Klondike', () => {
 
   test('lowest foundation value on a game with non-empty foundations should be correct', () => {
     // get a known gameState
-    var testState2 = Mockdike.createGame(higherMinimumFoundationValue, 1);
+    var testState2 = Mockdike.createGame(gameStates.higherMinimumFoundationValue, 1);
 
     testState2.lowestFoundationValue = -1;
 
@@ -386,7 +387,7 @@ describe('Klondike', () => {
 
   test('lowest foundation value on game with all but last king in foundation should be correct', () => {
     // get a known gameState
-    var testState3 = Mockdike.createGame(allButLastKing, 1);
+    var testState3 = Mockdike.createGame(gameStates.allButLastKing, 1);
 
     testState3.lowestFoundationValue = -1;
 
@@ -398,18 +399,18 @@ describe('Klondike', () => {
 
   test('setHash', () => {
     // get a known gameState
-    var testState1 = Mockdike.createGame(aceCanMoveToFoundation, 1);
+    var testState1 = Mockdike.createGame(gameStates.aceCanMoveToFoundation, 1);
 
     testState1.hash = -1;
 
     Klondike.setHash(testState1);
 
     // I am honestly not sure if this is correct or unique...
-    expect(testState1.hash).toBe(-530537581);
+    expect(testState1.hash).toBe(-1478072029);
   });
 
   test('setHash for all but last king in foundations', () => {
-    var testState3 = Mockdike.createGame(allButLastKing, 1);
+    var testState3 = Mockdike.createGame(gameStates.allButLastKing, 1);
 
     testState3.hash = -1;
 
@@ -420,128 +421,112 @@ describe('Klondike', () => {
     expect(testState3.hash).toBe(5544926705);
   });
 
+  test('moving card from tableau empties out where the card used to be by setting value to 255', () => {
+    let gameState = Mockdike.createGame(gameStates.aceCanMoveToFoundationEverythingKnown2, 1);
+
+    /*
+    const Player = require('../Player');
+    const queue = Player.createPriorityQueue();
+    Player.identifyMoves(gameState, queue);
+    console.log('test', queue.toArray());
+    */
+
+    let move = {
+      stateScore: 25,
+      moveScore: 3,
+      from: 'tableaux',
+      fromIndex: 3,
+      count: 1,
+      to: 'tableaux',
+      toIndex: 6,
+      hash: 4127962283
+    };
+
+    // do the move
+    Klondike.doMove(gameState, move);
+
+    expect(gameState.piles.tableaux[3].len()).toBe(3);
+  });
+
+  test('automatically creating string representation automatically creates string representation', () => {
+    Klondike.automaticallyCreateStringRepresentation = true;
+    let gameState = Klondike.newGame(1);
+
+    expect(gameState.stringRepresentation).not.toBe('');
+  });
+
+  test('drawing card turns over next card', () => {
+    let gameState = Mockdike.createGame(gameStates.aceCanMoveToFoundationEverythingKnown2, 1);
+
+    // Klondike.setStringRepresentation(gameState);
+    // console.log(gameState.stringRepresentation);
+    // const Player = require('../Player');
+    // const queue = Player.createPriorityQueue();
+    // Player.identifyMoves(gameState, queue);
+    // console.log('test', queue.toArray());
+
+    let move = {
+      stateScore: 25,
+      moveScore: 0,
+      from: 'stock',
+      to: 'waste',
+      count: 1,
+      hash: 4127962283
+    };
+
+    // do the move
+    Klondike.doMove(gameState, move);
+
+    expect(gameState.piles.stock.len()).toBe(12);
+    expect(gameState.piles.waste.len()).toBe(4);
+  });
+
+  test('drawing card last card does not turn over anything', () => {
+    let gameState = Mockdike.createGame(gameStates.aceCanMoveToFoundationEverythingKnown3, 1);
+
+    // Klondike.setStringRepresentation(gameState);
+    // console.log(gameState.stringRepresentation);
+    // const Player = require('../Player');
+    // const queue = Player.createPriorityQueue();
+    // Player.identifyMoves(gameState, queue);
+    // console.log('test', queue.toArray());
+
+    let move = {
+      stateScore: 25,
+      moveScore: 0,
+      from: 'stock',
+      to: 'waste',
+      count: 1,
+      hash: 4127962283
+    };
+
+    // do the move
+    Klondike.doMove(gameState, move);
+
+    expect(gameState.piles.stock.len()).toBe(0);
+    expect(gameState.piles.waste.len()).toBe(16);
+  });
+
+  test('reseting stock resets stock', () => {
+    let gameState = Mockdike.createGame(gameStates.aceCanMoveToFoundationEverythingKnown4, 1);
+
+    let move = {
+      stateScore: 25,
+      moveScore: 0,
+      from: 'waste',
+      to: 'stock',
+      count: 16,
+      hash: 4954318858
+    };
+
+    // do the move
+    Klondike.doMove(gameState, move);
+
+    expect(gameState.piles.stock.len()).toBe(16);
+    expect(gameState.piles.waste.len()).toBe(0);
+  });
+
   // todo: add a test that makes sure all 52 cards are dealt out without any duplicates
+
+  // todo: add a test to test moves
 });
-
-const aceCanMoveToFoundationEverythingKnown = `
-  ST: ( 6C),( 7C),( 8C),( 9C),(10C),( JC),( QC),( KC),( 2D),( 3D),( 4D),( 6D),( 7D)
-  WA: [ 5S],( 8D),( 9D)
-
-  F0: [ AS],[ 2S],[ 3S],[ 4S]
-  F1: [ AD]
-  F2:
-  F3: [ AC],[ 2C],[ 3C],[ 4C]
-
-  T0:
-  T1: (10D),[ AH]
-  T2: ( JD),( QD),[ KD]
-  T3: ( 2H),( 3H),( 4H),[ 5C]
-  T4: ( 5H),( 7H),( 8H),( 9H),[ JH]
-  T5: (10H),( QH),( KH),( 6S),( 7S),[ 5D]
-  T6: ( 8S),( 9S),(10S),( JS),( QS),( KS),[ 6H]`;
-
-const aceCanMoveToFoundation = `
-  ST: (???),(???),(???),(???),(???),(???),(???),(???),(???),(???),(???),(???),(???)
-  WA: [ 5S],(???),(???)
-
-  F0: [ AS],[ 2S],[ 3S],[ 4S]
-  F1: [ AD]
-  F2:
-  F3: [ AC],[ 2C],[ 3C],[ 4C]
-
-  T0:
-  T1: (???),[ AH]
-  T2: (???),(???),[ KD]
-  T3: (???),(???),(???),[ 5C]
-  T4: (???),(???),(???),(???),[ JH]
-  T5: (???),(???),(???),(???),(???),[ 5D]
-  T6: (???),(???),(???),(???),(???),( KS),[ 6H]`;
-
-const knownFoundationOrder = `
-  ST: (???),(???),(???),(???),(???),(???),(???),(???),(???),(???),(???),(???),(???)
-  WA: [ 5S],(???),(???)
-
-  F0: [ AC],[ 2C],[ 3C],[ 4C]
-  F1: [ AD]
-  F2:
-  F3: [ AS],[ 2S],[ 3S],[ 4S]
-
-  T0:
-  T1: (???),[ AH]
-  T2: (???),(???),[ KD]
-  T3: (???),(???),(???),[ 5C]
-  T4: (???),(???),(???),(???),[ JH]
-  T5: (???),(???),(???),(???),(???),[ 5D]
-  T6: (???),(???),(???),(???),(???),( KS),[ 6H]`;
-
-const knownFoundationOrder2 = `
-  ST: (???),(???),(???),(???),(???),(???),(???),(???),(???),(???),(???),(???),(???)
-  WA: [ 5S],(???),(???)
-
-  F0:
-  F1: [ AS],[ 2S],[ 3S],[ 4S]
-  F2: [ AD]
-  F3: [ AC],[ 2C],[ 3C],[ 4C]
-
-  T0:
-  T1: (???),[ AH]
-  T2: (???),(???),[ KD]
-  T3: (???),(???),(???),[ 5C]
-  T4: (???),(???),(???),(???),[ JH]
-  T5: (???),(???),(???),(???),(???),[ 5D]
-  T6: (???),(???),(???),(???),(???),( KS),[ 6H]`;
-
-const higherMinimumFoundationValue = `
-  ST: (???),(???),(???),(???),(???),(???),(???),(???),(???),(???),(???),(???),(???)
-  WA: [ 5S],(???),(???)
-
-  F0: [ AH],[ 2H],[ 3H]
-  F1: [ AS],[ 2S],[ 3S],[ 4S]
-  F2: [ AD],[ 2D],[ 3D]
-  F3: [ AC],[ 2C],[ 3C],[ 4C]
-
-  T0:
-  T1: (???),[10H]
-  T2: (???),(???),[ KD]
-  T3: (???),(???),(???),[ 5C]
-  T4: (???),(???),(???),(???),[ JH]
-  T5: (???),(???),(???),(???),(???),[ 5D]
-  T6: (???),(???),(???),(???),(???),( KS),[ 6H]`;
-
-const allButLastKing = `
-    ST:
-    WA:
-
-    F0: [ AH],[ 2H],[ 3H],[ 4H],[ 5H],[ 6H],[ 7H],[ 8H],[ 9H],[ 10H],[ JH],[ QH],[ KH]
-    F1: [ AS],[ 2S],[ 3S],[ 4S],[ 5S],[ 6S],[ 7S],[ 8S],[ 9S],[ 10S],[ JS],[ QS]
-    F2: [ AD],[ 2D],[ 3D],[ 4D],[ 5D],[ 6D],[ 7D],[ 8D],[ 9D],[ 10D],[ JD],[ QD],[ KD]
-    F3: [ AC],[ 2C],[ 3C],[ 4C],[ 5C],[ 6C],[ 7C],[ 8C],[ 9C],[ 10C],[ JC],[ QC],[ KC]
-
-    T0: [ KS]
-    T1:
-    T2:
-    T3:
-    T4:
-    T5:
-    T6: `;
-
-//   // get another known gameState
-//   var testState3 = Mockdike.createGame(
-//     ' AC| AD| AH|   |   |   |   |' +
-//       ' 2C| 2D| 2H| AS|   |   |   |' +
-//       ' 3C| 3D| 3H| 2S|   |   |   |' +
-//       ' 4C| 4D| 4H| 3S|   |   |   |' +
-//       ' 5C| 5D| 5H| 4S|   |   |   |' +
-//       ' 6C| 6D| 6H| 5S|   |   |   |' +
-//       ' 7C| 7D| 7H| 6S|   |   |   |' +
-//       ' 8C| 8D| 8H| 7S|   |   |   |' +
-//       ' 9C| 9D| 9H| 8S|   |   |   |' +
-//       '10C|10D|10H| 9S|   |   |   |' +
-//       ' JC| JD| JH|10S|   |   |   |' +
-//       ' QC| QD| QH| JS|   |   |   |' +
-//       ' KC| KD| KH| QS|   | []| []|' +
-//       '---------------------------|' +
-//       ' KS| []| []| []| []| []| []|',
-//     1
-//   );
-//

@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "buckets-js": "^1.98.2",
     "prettyjson": "^1.2.1"
   }
 }

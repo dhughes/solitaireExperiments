@@ -56,7 +56,7 @@ Card.fromString = function(string) {
   } else if (value === 'K') {
     value = 13;
   } else if (!(value >= 2 || value <= 10)) {
-    throw 'Invalid Value ' + value;
+    throw new Error('Invalid Value ' + value);
   }
 
   // figure out the suit
@@ -69,7 +69,7 @@ Card.fromString = function(string) {
   } else if (suit === 'S') {
     suit = 3;
   } else {
-    throw 'Invalid Suit ' + suit;
+    throw new Error('Invalid Suit ' + suit);
   }
 
   return Card.newCard(parseInt(value, 10), parseInt(suit, 10), faceUp);
@@ -90,7 +90,7 @@ Card.numericValue = function(card) {
  * @returns {String} The string representation of the card
  */
 Card.value = function(card) {
-  if (card === 0 || card === 1) throw 'Unknown Value';
+  if (card === 0 || card === 1) throw new Error('Unknown Value');
 
   var value = Card.numericValue(card);
 
@@ -114,7 +114,7 @@ Card.value = function(card) {
  * @return {int}
  */
 Card.numericSuit = function(card) {
-  if (card === 0 || card === 1) throw 'Unknown Suit';
+  if (card === 0 || card === 1) throw new Error('Unknown Suit');
 
   return (card >> 1) & Card.suitFilter;
 };
@@ -125,7 +125,7 @@ Card.numericSuit = function(card) {
  * @returns {string} The suit of the card in unicode
  */
 Card.suit = function(card) {
-  if (card === 0 || card === 1) throw 'Unknown Suit';
+  if (card === 0 || card === 1) throw new Error('Unknown Suit');
 
   var suit = Card.numericSuit(card);
 
@@ -152,7 +152,7 @@ Card.suit = function(card) {
  */
 //todo: write a test for this
 Card.color = function(card) {
-  if (card === 0 || card === 1) throw 'Unknown Suit';
+  if (card === 0 || card === 1) throw new Error('Unknown Suit');
 
   var suit = Card.numericSuit(card);
 

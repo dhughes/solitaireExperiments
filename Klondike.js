@@ -1,3 +1,4 @@
+require('./Util');
 const Deck = require('./Deck');
 const Card = require('./Card');
 
@@ -15,9 +16,9 @@ Klondike.automaticallyCreateStringRepresentation = false;
  */
 Klondike.newGameState = function(drawCount) {
   // create the game state
-  var data = Uint8Array.ofSize(212).map(i => -1);
-  var piles = Klondike.getPiles(data);
-  var gameState = {
+  let data = Uint8Array.ofSize(212).map(i => -1);
+  let piles = Klondike.getPiles(data);
+  let gameState = {
     data: data, // 13+13+13+13 + 13+14+15+16+17+18+19 + 24 + 24
     piles: piles,
     pileLengths: {
@@ -46,20 +47,20 @@ Klondike.newGameState = function(drawCount) {
  */
 Klondike.newGame = function(drawCount) {
   // create and shuffle a new deck
-  var cards = Deck.shuffle(Deck.newDeck());
+  let cards = Deck.shuffle(Deck.newDeck());
 
   // create the game state
-  var gameState = Klondike.newGameState(drawCount);
+  let gameState = Klondike.newGameState(drawCount);
 
   // figure out what piles we've got
-  var piles = gameState.piles;
+  let piles = gameState.piles;
 
   // deal the game out
 
   // populate the Tableau columns
-  var i = -1;
-  for (var r = 0; r < 7; r++) {
-    for (var t = 0 + r; t < 7; t++) {
+  let i = -1;
+  for (let r = 0; r < 7; r++) {
+    for (let t = 0 + r; t < 7; t++) {
       i++;
       piles.tableaux[t][r] = cards[i];
       if (r === t) {
@@ -76,7 +77,7 @@ Klondike.newGame = function(drawCount) {
   // todo: I may want to factor this out into its own function so I can reuse the code for drawing
   // set the waste
   i = -1;
-  for (var c = cards.length - 1; c > cards.length - 1 - drawCount; c--) {
+  for (let c = cards.length - 1; c > cards.length - 1 - drawCount; c--) {
     i++;
     piles.waste[i] = Card.flip(cards[c]);
   }
@@ -97,26 +98,26 @@ Klondike.doMove = function(gameState, move) {
   move.count = move.count || 1;
 
   // get the piles from the gameState
-  var piles = gameState.piles;
-  var pileLengths = gameState.pileLengths;
+  let piles = gameState.piles;
+  let pileLengths = gameState.pileLengths;
 
-  var from = piles[move.from];
-  var fromLen = pileLengths[move.from];
+  let from = piles[move.from];
+  let fromLen = pileLengths[move.from];
 
   if (move.fromIndex !== undefined) {
     from = from[move.fromIndex];
     fromLen = fromLen[move.fromIndex];
   }
 
-  var to = piles[move.to];
+  let to = piles[move.to];
   if (move.toIndex !== undefined) {
     to = to[move.toIndex];
   }
 
   // figure out the index of what we're moving
-  var start = fromLen - move.count;
-  var end = fromLen;
-  var i, card;
+  let start = fromLen - move.count;
+  let end = fromLen;
+  let i, card;
 
   // if we're moving to or from the stock we need to loop backwards, otherwise we loop forward and move the cards to the to pile
   if (move.from === 'stock' || move.to === 'stock') {
@@ -124,7 +125,7 @@ Klondike.doMove = function(gameState, move) {
     for (i = end - 1; i >= start && i !== 255; i--) {
       // remove the card
       card = from[i];
-      from[i] = 0;
+      from[i] = 255;
       // flip this card to the target
       if (card !== 255) {
         to.push(Card.flip(card));
@@ -136,7 +137,7 @@ Klondike.doMove = function(gameState, move) {
     for (i = start; i < end; i++) {
       // remove the card
       card = from[i];
-      from[i] = 0;
+      from[i] = 255;
       // add this card to the target
       to.push(card);
       //console.log(i + ": " + Card.asString(card));
@@ -189,19 +190,19 @@ Klondike.updateScore = function(gameState) {
   gameState.stateScore = 0;
 
   // get the piles
-  var piles = gameState.piles;
-  var pileLengths = gameState.pileLengths;
+  let piles = gameState.piles;
+  let pileLengths = gameState.pileLengths;
 
   // add the foundations into the score
-  for (var f = 0; f < piles.foundations.length; f++) {
+  for (let f = 0; f < piles.foundations.length; f++) {
     gameState.stateScore += pileLengths.foundations[f] * 2;
   }
 
   // add the tableaux into the score
   for (t = 0; t < piles.tableaux.length; t++) {
     // loop backwards over this foundation until we find a card that's not face up
-    for (var c = piles.tableaux[t].length - 1; c !== 255; c--) {
-      var card = piles.tableaux[t][c];
+    for (let c = piles.tableaux[t].length - 1; c !== 255; c--) {
+      let card = piles.tableaux[t][c];
       if (card !== 255) {
         if (Card.isFaceUp(card)) {
           gameState.stateScore++;
@@ -267,7 +268,7 @@ Klondike.updatePileLengths = function(gameState, specificPiles) {
 
   if (specificPiles !== undefined) {
     // only update specific piles
-    for (var i = 0; i < specificPiles.length; i++) {
+    for (let i = 0; i < specificPiles.length; i++) {
       if (specificPiles[i].index !== undefined) {
         gameState.pileLengths[specificPiles[i].pile][specificPiles[i].index] = gameState.piles[specificPiles[i].pile][
           specificPiles[i].index
@@ -347,17 +348,16 @@ Klondike.getTableaux = function(data) {
  */
 Klondike.setLowestFoundationValue = function(gameState) {
   // get the foundations we're working with
-  var foundations = gameState.piles.foundations;
-  var foundationLengths = gameState.pileLengths.foundations;
+  let foundations = gameState.piles.foundations;
+  let foundationLengths = gameState.pileLengths.foundations;
 
   // record the lowest foundation value
-  var lowestFoundationValue = 13;
+  let lowestFoundationValue = 13;
 
-  for (var f = 0; f < foundations.length; f++) {
+  for (let f = 0; f < foundations.length; f++) {
     /*console.log("foundationLengths " + f + ": " + foundationLengths[f]);
 		console.log("foundation.len() " + f + ": " + foundations[f].len());
-		console.log(foundations[f].asString());
-*/
+		console.log(foundations[f].asString());*/
     if (foundationLengths[f] < lowestFoundationValue) {
       lowestFoundationValue = foundationLengths[f];
     }
@@ -378,10 +378,10 @@ Klondike.setLowestFoundationValue = function(gameState) {
 Klondike.setHash = function(gameState) {
   gameState.hash = 0;
 
-  for (var i = 0; i < gameState.data.length; i++) {
+  for (let i = 0; i < gameState.data.length; i++) {
     //console.log(i + " / " + gameState.data[i]);
     if (gameState.data[i] !== 255) {
-      var val = ((gameState.data[i] * (i + 1)) << i) + i;
+      let val = ((gameState.data[i] * (i + 1)) << i) + i;
       gameState.hash += val;
       //console.log("   " + val + " = " + gameState.hash);
 
@@ -397,23 +397,23 @@ Klondike.setHash = function(gameState) {
  */
 Klondike.setFoundationSuits = function(gameState) {
   // default order is: c d h s
-  var suits = Uint8Array.ofSize(4);
+  let suits = Uint8Array.ofSize(4);
   suits[0] = 0;
   suits[1] = 1;
   suits[2] = 2;
   suits[3] = 3;
 
   // set the default order
-  var order = suits;
+  let order = suits;
 
   // get the foundations we're working with
-  var foundations = gameState.piles.foundations;
+  let foundations = gameState.piles.foundations;
 
-  var swap = function(arr, val1, val2) {
-    var pos1 = -1;
-    var pos2 = -1;
+  let swap = function(arr, val1, val2) {
+    let pos1 = -1;
+    let pos2 = -1;
 
-    for (var x = 0; x < arr.length; x++) {
+    for (let x = 0; x < arr.length; x++) {
       if (arr[x] === val1) {
         pos1 = x;
       }
@@ -425,15 +425,15 @@ Klondike.setFoundationSuits = function(gameState) {
       }
     }
 
-    var temp = arr[pos1];
+    let temp = arr[pos1];
     arr[pos1] = arr[pos2];
     arr[pos2] = temp;
   };
 
   // loop over the foundations and see what card we actually have in each (if any)
-  for (var i = 0; i < foundations.length; i++) {
+  for (let i = 0; i < foundations.length; i++) {
     if (foundations[i][0] !== 255) {
-      var suit = Card.numericSuit(foundations[i][0]);
+      let suit = Card.numericSuit(foundations[i][0]);
       swap(order, suit, suits[i]);
     }
   }

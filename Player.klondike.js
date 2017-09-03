@@ -1,3 +1,7 @@
+const buckets = require('buckets-js');
+const Card = require('./Card');
+const Klondike = require('./Klondike');
+
 /**
  * Player is an object that can identify possible moves and automatically play
  * a game state to a win or loss.
@@ -151,8 +155,7 @@ Player.isWinnable = function(gameState, callback) {
 
     // did we win?
     if (gameState.won) {
-      console.log('Won in ' + Player.moves + ' moves!');
-      callback(true);
+      callback(true, Player.moves);
       return;
     }
 
@@ -166,11 +169,8 @@ Player.isWinnable = function(gameState, callback) {
       Player.identifyMoves(gameState, Player.priorities);
     }
   }
-
-  console.log('ran ' + Player.moves + ' times!');
-
   // there's no winning this game :(
-  callback(false);
+  callback(false, Player.moves);
 };
 
 /**
@@ -203,7 +203,7 @@ Player.identifyMoves = function(gameState, collection) {
     from = piles.tableaux[f];
     fromLen = pileLengths.tableaux[f];
 
-    // if the first card in the tableau is 0 then the pile is empty
+    // if the first card in the tableau is 255 then the pile is empty
     if (!fromLen) {
       continue;
     }
@@ -211,7 +211,7 @@ Player.identifyMoves = function(gameState, collection) {
     bonus = 0;
 
     // are we moving the last card out of this tableau?
-    //todo: test in unit test
+    // todo: test in unit test
     if (from[1] === 0) {
       bonus++;
     }
@@ -326,12 +326,11 @@ Player.identifyMoves = function(gameState, collection) {
     fromLen = pileLengths.tableaux[f];
 
     // loop backwards over the cards in this tableau
-    for (var c = fromLen - 1; c >= 0 && Card.isFaceUp(from[c]); c--) {
+    for (var c = fromLen - 1; c !== 255 && Card.isFaceUp(from[c]); c--) {
       card = from[c];
       cardColor = Card.color(card);
       cardNumericValue = Card.numericValue(card);
       bonus = 0;
-
       var validToMove = false; // only try to move either the entire stack of visible cards or the last visible card.
 
       var prevFaceUp = Card.isFaceUp(from[c - 1]);
@@ -347,7 +346,7 @@ Player.identifyMoves = function(gameState, collection) {
         // indicate that we should see if this card should be moved.
         validToMove = foundationLen + 1 === Card.numericValue(previousCard);
         bonus++;
-      } else if (from[c - 1] && !prevFaceUp) {
+      } else if (from[c - 1] !== undefined && !prevFaceUp) {
         // if the previous card would be turned face up then we can see about moving this stack
         validToMove = true;
       } else if (c === 0 && cardNumericValue === 13) {
@@ -539,3 +538,5 @@ Player.identifyMoves = function(gameState, collection) {
     Player.savedStates[gameState.hash].identifiedMoves = identifiedMoves;
   }
 };
+
+module.exports = Player;
