@@ -1,128 +1,184 @@
-// const Spiderette = require('../Spiderette');
-// const Deck = require('../Deck');
-//const TableauMove = require('../TableauMove');
+const Spiderette = require('../Spiderette');
+const Mockette = require('./mock/Spiderette.mock');
+const prettyjson = require('prettyjson');
+const gameStates = require('./stub/Spiderette.games');
 
-//console.log(Deck.shuffled().map(card => card.toString(true)).join(' '));
+let gameState, wonGame;
 
 describe('Spiderette', () => {
-  test('can create new Spiderette game with a deck of cards', () => {
-    // const game = new Spiderette(Deck.shuffled());
-    // expect(game).not.toBeNull();
+  beforeEach(() => {
+    gameState = Spiderette.newGame();
+    wonGame = Mockette.createGame(gameStates.wonGame);
+
+    //console.log(Spiderette.asString(gameState));
   });
 
-  // test('expect toString() for an unshuffled deck to be particular pattern when all face up', () => {
-  //   const game = new Spiderette(Deck.deck());
-  //   expect(game.toString(true).replace(/[ \n]/g, '')).toBe(orderedFaceUp.replace(/[ \n]/g, ''));
-  // });
-  //
-  // test('expect toString() for an unshuffled deck to be particular pattern', () => {
-  //   const game = new Spiderette(Deck.deck());
-  //   expect(game.toString().replace(/[ \n]/g, '')).toBe(ordered.replace(/[ \n]/g, ''));
-  // });
-  //
-  // test('expect toString() for a shuffled deck NOT to match the standard pattern when all face up', () => {
-  //   const game = new Spiderette(Deck.shuffled());
-  //   expect(game.toString(true).replace(/[ \n]/g, '')).not.toBe(orderedFaceUp.replace(/[ \n]/g, ''));
-  // });
-  //
-  // test('expected that parsed game toString() matches the source string', () => {
-  //   const game = Spiderette.parse(randomGame1FaceUp);
-  //   expect(game.toString(true).replace(/[ \n]/g, '')).toBe(randomGame1FaceUp.replace(/[ \n]/g, ''));
-  // });
-  //
-  // test('can parse hard game 1', () => {
-  //   const game = Spiderette.parse(hardGame1);
-  //   expect(game.toString(true).replace(/[ \n]/g, '')).toBe(hardGame1.replace(/[ \n]/g, ''));
-  // });
-  //
-  // test('move queen to first king in hard game', () => {
-  //   const game = Spiderette.parse(hardGame1);
-  //   game.applyMove(new TableauMove(1, 6, 0));
-  //   expect(game.toString(true).replace(/[ \n]/g, '')).toBe(hardGame1_1.replace(/[ \n]/g, ''));
-  // });
-  //
-  // test('fail to move 6 to first king in hard game', () => {
-  //   const game = Spiderette.parse(hardGame1);
-  //   game.applyMove(new TableauMove(1, 5, 0));
-  //   expect(game.toString(true).replace(/[ \n]/g, '')).toBe(hardGame1.replace(/[ \n]/g, ''));
-  // });
+  test('name game default score should be 7', () => {
+    expect(gameState.stateScore).toBe(7);
+  });
+
+  test('name game foundation should be empty', () => {
+    expect(gameState.piles.foundation.len()).toBe(0);
+  });
+
+  test('name game tableaux should have correct number of cards', () => {
+    expect(gameState.piles.tableaux[0].len()).toBe(1);
+    expect(gameState.piles.tableaux[1].len()).toBe(2);
+    expect(gameState.piles.tableaux[2].len()).toBe(3);
+    expect(gameState.piles.tableaux[3].len()).toBe(4);
+    expect(gameState.piles.tableaux[4].len()).toBe(5);
+    expect(gameState.piles.tableaux[5].len()).toBe(6);
+    expect(gameState.piles.tableaux[6].len()).toBe(7);
+  });
+
+  test('new game stock should have 24 cards', () => {
+    expect(gameState.piles.stock.len()).toBe(24);
+  });
+
+  test('can create string representation of game', () => {
+    Spiderette.setStringRepresentation(gameState);
+
+    expect(gameState.stringRepresentation.length).not.toBe(0);
+  });
+
+  test('new game tableaux should have correct number of cards with remaining being empty (255)', () => {
+    // validate the state of the piles
+    const piles = gameState.piles;
+
+    // now validate the tableaux
+    for (let t = 0; t < piles.tableaux.length; t++) {
+      for (let i = 0; i < piles.tableaux[t].length; i++) {
+        if (i < t) {
+          expect(piles.tableaux[t][i]).not.toBe(255);
+          expect(Card.isFaceUp(piles.tableaux[t][i])).toBe(0);
+        } else if (i === t) {
+          expect(piles.tableaux[t][i]).not.toBe(255);
+          expect(Card.isFaceUp(piles.tableaux[t][i])).toBe(1);
+        } else {
+          expect(piles.tableaux[t][i]).toBe(255);
+        }
+      }
+    }
+  });
+
+  test('new game should have 24 cards in the stock, all face down', () => {
+    // validate the state of the piles
+    const piles = gameState.piles;
+
+    // we should have 23 cards in the stock
+    for (let s = 0; s < piles.stock.length; s++) {
+      expect(piles.stock[s]).not.toBe(255);
+      expect(Card.isFaceUp(piles.stock[s])).toBe(0);
+    }
+  });
+
+  test('gameState score should be updated correctly', () => {
+    // manually reset the state score
+    gameState.stateScore = 0;
+
+    expect(gameState.stateScore).toBe(0);
+
+    // we need to update the pileLengths before this will work
+    Spiderette.updatePileLengths(gameState);
+
+    // calculate the score
+    Spiderette.updateScore(gameState);
+
+    // score should be 8 by default
+    expect(gameState.stateScore).toBe(7);
+
+    // get the piles
+    var piles = gameState.piles;
+
+    // move a card to another tableaux (we don't care that this is a valid ace since we're just testing the score
+    piles.tableaux[0][1] = piles.tableaux[1][1];
+    piles.tableaux[1][1] = 255;
+    piles.tableaux[1][0] = Card.flip(piles.tableaux[1][0]);
+
+    // we need to update the pileLengths before this will work
+    Spiderette.updatePileLengths(gameState);
+
+    // calculate the score
+    Spiderette.updateScore(gameState);
+
+    // score should be 10 now
+    expect(gameState.stateScore).toBe(8);
+
+    // showing an extra card in the tableaux should increase the score by 1
+    piles.tableaux[2][1] = Card.flip(piles.tableaux[2][1]);
+
+    // we need to update the pileLengths before this will work
+    Spiderette.updatePileLengths(gameState);
+    Spiderette.updateScore(gameState);
+
+    // score should be 11 now
+    expect(gameState.stateScore).toBe(9);
+  });
+
+  test('game with all cards in foundation has a score of 104', () => {
+    expect(wonGame.stateScore).toBe(104);
+  });
+
+  test('can parse game with all known values', () => {
+    const gameState = Mockette.createGame(gameStates.sampleGame1);
+
+    Spiderette.setStringRepresentation(gameState);
+
+    expect(gameState.stateScore).toBe(12);
+  });
+
+  test('can parse game with unknown values', () => {
+    const gameState = Mockette.createGame(gameStates.gameWithUnknownValues);
+
+    expect(gameState.stateScore).toBe(7);
+  });
+
+  test('string representation created for completely known game', () => {
+    // create a draw-1 game
+    const gameState = Mockette.createGame(gameStates.sampleGame1, 1);
+
+    expect(gameState.stringRepresentation).toBe('');
+
+    // set the string state
+    Spiderette.setStringRepresentation(gameState);
+
+    expect(gameState.stringRepresentation.trim().replace(/^\s*(.*?)$/gm, '$1')).toBe(
+      gameStates.sampleGame1.trim().replace(/^\s*(.*?)$/gm, '$1')
+    );
+  });
+
+  test('string representation created for known game with unknown values', () => {
+    // create a draw-1 game
+    const gameState = Mockette.createGame(gameStates.gameWithUnknownValues, 1);
+
+    expect(gameState.stringRepresentation).toBe('');
+
+    // set the string state
+    Spiderette.setStringRepresentation(gameState);
+
+    expect(gameState.stringRepresentation.trim().replace(/^\s*(.*?)$/gm, '$1')).toBe(
+      gameStates.gameWithUnknownValues.trim().replace(/^\s*(.*?)$/gm, '$1')
+    );
+  });
+
+  test('setHash sets the hash', () => {
+    // get a known gameState
+    var testState1 = Mockette.createGame(gameStates.sampleGame1, 1);
+
+    testState1.hash = -1;
+
+    Spiderette.setHash(testState1);
+
+    // I am honestly not sure if this is correct or unique...
+    expect(testState1.hash).toBe(7639199038);
+  });
+
+  test('automatically creating string representation automatically creates string representation', () => {
+    Spiderette.automaticallyCreateStringRepresentation = true;
+    let gameState = Spiderette.newGame(1);
+
+    expect(gameState.stringRepresentation).not.toBe('');
+  });
+
+  // todo: test assorted moves (tableaux to tableaux, stock to tableaux, moving a full stack to the foundation)
 });
-
-/************************ GAMES ************************/
-
-const hardGame1 = `( J♡) ( 6♠) ( 4♣) ( K♡) ( Q♢) ( A♢) ( 5♠) ( 8♠) ( 3♠) ( 2♣) ( K♣) ( J♠) ( 9♠) ( 3♢) ( 3♣) ( J♣) ( 5♡) ( 9♣) ( J♢) ( A♣) ( A♡) ( 7♠) ( 4♠) ( 2♢)
-
--
--
--
--
-
-[ K♠] ( 8♣) ( 9♡) (???) (???) ( Q♠) (???)
-      [ 4♢] ( 7♡) (???) (???) ( Q♡) ( 6♡)
-            [ 8♢] ( 4♡) (???) ( 2♠) ( 6♠)
-                  [10♠] ( 8♡) ( 9♢) ( 2♡)
-                        [ K♢] (10♣) ( 7♣)
-                              [ 6♢] ( 5♣)
-                                    [ Q♠]
-`;
-
-const hardGame1_1 = `( J♡) ( 6♠) ( 4♣) ( K♡) ( Q♢) ( A♢) ( 5♠) ( 8♠) ( 3♠) ( 2♣) ( K♣) ( J♠) ( 9♠) ( 3♢) ( 3♣) ( J♣) ( 5♡) ( 9♣) ( J♢) ( A♣) ( A♡) ( 7♠) ( 4♠) ( 2♢)
-
--
--
--
--
-
-[ K♠] ( 8♣) ( 9♡) (???) (???) ( Q♠) (???)
-[ Q♠] [ 4♢] ( 7♡) (???) (???) ( Q♡) ( 6♡)
-            [ 8♢] ( 4♡) (???) ( 2♠) ( 6♠)
-                  [10♠] ( 8♡) ( 9♢) ( 2♡)
-                        [ K♢] (10♣) ( 7♣)
-                              [ 6♢] [ 5♣]
-`;
-
-const orderedFaceUp = `( 3♡) ( 4♡) ( 5♡) ( 6♡) ( 7♡) ( 8♡) ( 9♡) (10♡) ( J♡) ( Q♡) ( K♡) ( A♠) ( 2♠) ( 3♠) ( 4♠) ( 5♠) ( 6♠) ( 7♠) ( 8♠) ( 9♠) (10♠) ( J♠) ( Q♠) ( K♠)
-
--
--
--
--
-
-[ A♣] ( 2♣) ( 3♣) ( 4♣) ( 5♣) ( 6♣) ( 7♣)
-      [ 8♣] ( 9♣) (10♣) ( J♣) ( Q♣) ( K♣)
-            [ A♢] ( 2♢) ( 3♢) ( 4♢) ( 5♢)
-                  [ 6♢] ( 7♢) ( 8♢) ( 9♢)
-                        [10♢] ( J♢) ( Q♢)
-                              [ K♢] ( A♡)
-                                    [ 2♡]`;
-
-const ordered = `(***) (***) (***) (***) (***) (***) (***) (***) (***) (***) (***) (***) (***) (***) (***) (***) (***) (***) (***) (***) (***) (***) (***) (***)
-
--
--
--
--
-
-[ A♣] (***) (***) (***) (***) (***) (***)
-      [ 8♣] (***) (***) (***) (***) (***)
-            [ A♢] (***) (***) (***) (***)
-                  [ 6♢] (***) (***) (***)
-                        [10♢] (***) (***)
-                              [ K♢] (***)
-                                    [ 2♡]`;
-
-const randomGame1FaceUp = `[ K♠] [ 6♣] [ 9♡] [10♢] [ A♢] [ J♣] [ 8♡] [ 6♠] [ A♡] [ 5♣] [ Q♣] [ 7♡] [ 6♡] [10♠] [ 5♢] [ 8♠] [ 4♣] [ Q♠]
-
--
--
--
--
-
-[ J♠]       [ 4♠] [ 9♢] [ 3♠] [ A♠] [ J♢]
-[10♡]       [ 8♢] [ 5♠] [ 3♢] [ 6♢] [ K♢]
-[ 7♠]       [ 7♢] [ 9♣] [ 4♢] [10♣] [ 3♡]
-            [ K♡] [ 2♠] [ 2♣] [ K♣] [ Q♡]
-            [ Q♢] [ 9♠] [ 7♣] [ 8♣] [ 3♣]
-            [ J♡]       [ A♣] [ 5♡] [ 2♢]
-                              [ A♣] [ 2♡]
-                                    [ 4♡]`;

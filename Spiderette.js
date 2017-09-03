@@ -1,139 +1,259 @@
+require('./Util');
+const Deck = require('./Deck');
 const Card = require('./Card');
-const TableauMove = require('./TableauMove');
 
-const Spiderette = function(options) {
-  let deck, tableaus, foundations, stock;
+/**
+ * Spiderette is an object that can create and manipulate Spiderette game states.
+ * @type {Object}
+ */
+Spiderette = {};
 
-  if (options instanceof Array) {
-    deck = options;
-    tableaus = [[], [], [], [], [], [], []];
-    foundations = [[], [], [], []];
-    stock = [];
+Spiderette.automaticallyCreateStringRepresentation = false;
 
-    // deal the game
-    deal();
-  } else {
-    tableaus = options.tableaus;
-    foundations = options.foundations;
-    stock = options.stock;
-  }
-
-  this.applyMove = function(move) {
-    if (move instanceof TableauMove) {
-      const from = tableaus[move.getFrom()];
-      const to = tableaus[move.getTo()];
-
-      // get the cards to move
-      const toMove = from.splice(-move.getQuanitity());
-
-      // make sure this move is allowed
-      if (TableauMove.validate(toMove, to)) {
-        // push them into the target tableau
-        to.push(...toMove);
-
-        // flip the last card in the from tableau, if any
-        if (from.length) from[from.length - 1].flip();
-      }
-    }
+/**
+ * Creates a new, virginal, gameState
+ * @return {Object} The new gameState
+ */
+Spiderette.newGameState = function() {
+  // create the game state
+  let data = Uint8Array.ofSize(412).map(i => -1);
+  let piles = Spiderette.getPiles(data);
+  let gameState = {
+    data: data, // 52 + (48*7) + 24
+    piles: piles,
+    pileLengths: {
+      foundation: 0,
+      tableaux: Uint8Array.ofSize(7).map(i => 0),
+      stock: 0
+    },
+    stateScore: 0,
+    stringRepresentation: '',
+    hash: 0,
+    won: false
   };
 
-  /**
-   * Creates a string representation of the tableaus
-   * @param  {[type]} allFaceUp [description]
-   * @return {[type]}           [description]
-   */
-  function tableausToString(allFaceUp) {
-    const longestTableau = tableaus.reduce((acc, tableau) => (tableau.length > acc ? tableau.length : acc), 0);
-    let result = '';
+  Spiderette.updatePileLengths(gameState);
 
-    for (let row = 0; row < longestTableau; row++) {
-      for (let tableau = 0; tableau < 7; tableau++) {
-        const card = tableaus[tableau][row];
-        result += card ? ` ${card.toString(allFaceUp)}` : '      ';
-      }
-      result += '\n';
-    }
+  return gameState;
+};
 
-    return result;
-  }
+/**
+ * Creates and deals a new game
+ * @param drawCount
+ */
 
-  /**
-   * deals a new game of spiderette
-   * @return {[type]} [description]
-   */
-  function deal() {
-    let index = 0;
+Spiderette.newGame = function() {
+  // create and shuffle a new deck
+  let cards = Deck.shuffle(Deck.newDeck());
 
-    for (let row = 0; row < 7; row++) {
-      for (let tableau = 0; tableau < 7; tableau++) {
-        if (row <= tableau) {
-          const card = deck[index++];
-          if (row === tableau) {
-            card.flip();
-          }
-          tableaus[tableau].push(card);
-        }
+  // create the game state
+  let gameState = Spiderette.newGameState();
+
+  // figure out what piles we've got
+  let piles = gameState.piles;
+
+  // deal the game out
+
+  // populate the Tableau columns
+  let i = -1;
+  for (let r = 0; r < 7; r++) {
+    for (let t = 0 + r; t < 7; t++) {
+      i++;
+      piles.tableaux[t][r] = cards[i];
+      if (r === t) {
+        piles.tableaux[t][r] = Card.flip(piles.tableaux[t][r]);
       }
     }
-
-    stock.push(...deck.slice(index));
   }
 
-  /**
-   * returns a string representation of this game
-   * @param  {[type]} allFaceUp [description]
-   * @return {[type]}           [description]
-   */
-  this.toString = function(allFaceUp) {
-    let result = ' ' + stock.map(card => card.toString(allFaceUp)).join(' ') + '\n\n';
+  // stock the stock
+  piles.stock.set(cards.subarray(28, 52));
 
-    result += foundations
-      .map(foundation => {
-        if (foundation.length) {
-          return ' ' + foundation.map(card => card.toString(allFaceUp)).join(' ');
-        } else {
-          return ' -';
-        }
-      })
-      .join('\n');
+  // set the calculated values in the gameState
+  Spiderette.updateState(gameState);
 
-    result += '\n\n' + tableausToString(allFaceUp);
+  // return the gameState (this can be worked with by any function on this Spiderette object.
+  return gameState;
+};
 
-    return result;
+/**
+ * Creates a set of subarrays within the game state.cards element for each pile
+ * @param gameState
+ * @returns {Object} Object with elements (all arrays): foundation0, foundation1, foundation2, foundation3, tableau0, tableau1, tableau2, tableau3, tableau4, tableau5, tableau6, waste, stock
+ */
+Spiderette.getPiles = function(data) {
+  return {
+    foundation: data.subarray(0, 52), // 52
+    tableaux: Spiderette.getTableaux(data), // 48 * 7
+    stock: data.subarray(388, 412) // 24
   };
 };
 
-Spiderette.parse = function(str) {
-  let deck = [];
-
-  str = str.trim().replace(/\n/g, '\n ').replace(/ {6}/g, ' -').replace(/\[ /g, '[-').replace(/\( /g, '(-');
-
-  rows = str.split('\n').map(row =>
-    row.trim().split(' ').map(card => {
-      card = card.replace(/-/g, ' ').trim();
-      return card === '' ? undefined : Card.parse(card);
-    })
-  );
-
-  let stock = rows[0];
-  let foundations = [
-    rows[2].filter(card => card != undefined),
-    rows[3].filter(card => card != undefined),
-    rows[4].filter(card => card != undefined),
-    rows[5].filter(card => card != undefined)
+/**
+ * Gets the tableaux from the game
+ * @param  {Object} gameState The gameState to get the tableaux from
+ * @return {Array} The array of tableaux
+ */
+Spiderette.getTableaux = function(data) {
+  return [
+    data.subarray(52, 100), // 48
+    data.subarray(100, 148), // 48
+    data.subarray(148, 196), // 48
+    data.subarray(196, 244), // 48
+    data.subarray(244, 292), // 48
+    data.subarray(292, 340), // 48
+    data.subarray(340, 388) // 48
   ];
-  let tableaus = [[], [], [], [], [], [], []];
+};
 
-  for (let r = 7; r < rows.length; r++) {
-    let row = rows[r];
-    for (let i = 0; i < tableaus.length; i++) {
-      if (row[i] !== undefined) {
-        tableaus[i].push(row[i]);
+/**
+ * Updates the lengths of piles in the provided gameState
+ * @param {Object} gameState The gameState containing the piles
+ * @param {Array} specificPiles This is an array of specific piles to update. Each element is an object consisting of {pile, index}.
+ */
+Spiderette.updatePileLengths = function(gameState, specificPiles) {
+  let piles = gameState.piles;
+
+  if (specificPiles !== undefined) {
+    // only update specific piles
+    for (let i = 0; i < specificPiles.length; i++) {
+      if (specificPiles[i].index !== undefined) {
+        gameState.pileLengths[specificPiles[i].pile][specificPiles[i].index] = gameState.piles[specificPiles[i].pile][
+          specificPiles[i].index
+        ].len();
+      } else {
+        gameState.pileLengths[specificPiles[i].pile] = gameState.piles[specificPiles[i].pile].len();
+      }
+    }
+  } else {
+    // update all piles
+    gameState.pileLengths.foundation = piles.foundation.len();
+
+    gameState.pileLengths.tableaux[0] = piles.tableaux[0].len();
+    gameState.pileLengths.tableaux[1] = piles.tableaux[1].len();
+    gameState.pileLengths.tableaux[2] = piles.tableaux[2].len();
+    gameState.pileLengths.tableaux[3] = piles.tableaux[3].len();
+    gameState.pileLengths.tableaux[4] = piles.tableaux[4].len();
+    gameState.pileLengths.tableaux[5] = piles.tableaux[5].len();
+    gameState.pileLengths.tableaux[6] = piles.tableaux[6].len();
+
+    gameState.pileLengths.stock = piles.stock.len();
+  }
+};
+
+/**
+ * This is a convenience function to refesh all calculated values in a gamestate
+ * @param gameState
+ */
+Spiderette.updateState = function(gameState, specificPiles) {
+  // update the pile lengths
+  Spiderette.updatePileLengths(gameState, specificPiles);
+
+  // update the score
+  Spiderette.updateScore(gameState);
+
+  // generate the string representation of this state
+  if (Spiderette.automaticallyCreateStringRepresentation) {
+    Spiderette.setStringRepresentation(gameState);
+  }
+
+  // set the game's hash
+  Spiderette.setHash(gameState);
+};
+
+/**
+ * Updates the score in the gameState
+ * @param {Object} gameState The gameState to update.
+ */
+Spiderette.updateScore = function(gameState) {
+  gameState.stateScore = 0;
+
+  // get the piles
+  let piles = gameState.piles;
+  let pileLengths = gameState.pileLengths;
+
+  // add the foundations into the score
+  gameState.stateScore += pileLengths.foundation * 2;
+
+  // add the tableaux into the score
+  for (t = 0; t < piles.tableaux.length; t++) {
+    // loop backwards over this foundation until we find a card that's not face up
+    for (let c = piles.tableaux[t].length - 1; c !== 255; c--) {
+      let card = piles.tableaux[t][c];
+      if (card !== 255) {
+        if (Card.isFaceUp(card)) {
+          gameState.stateScore++;
+        } else {
+          break;
+        }
       }
     }
   }
 
-  return new Spiderette({ deck, tableaus, foundations, stock });
+  // check if we won!
+  if (gameState.stateScore === 104) {
+    gameState.won = true;
+  } else {
+    gameState.won = false;
+  }
+};
+
+/**
+ * Sets the hash value of a given gameState
+ * @param {Object} gameState the gameState
+ */
+Spiderette.setHash = function(gameState) {
+  gameState.hash = 0;
+
+  for (let i = 0; i < gameState.data.length; i++) {
+    //console.log(i + " / " + gameState.data[i]);
+    if (gameState.data[i] !== 255) {
+      let val = ((gameState.data[i] * (i + 1)) << i) + i;
+      gameState.hash += val;
+      //console.log("   " + val + " = " + gameState.hash);
+
+      //console.log("   " + (i << 8) + gameState.data[i]);
+      //gameState.hash += ((i << 8) + gameState.data[i]);
+    }
+  }
+};
+
+/**
+ * Creates the string representation of a game state
+ * @param {Object} gameState The gameState to update
+ */
+Spiderette.setStringRepresentation = function(gameState) {
+  let text = '';
+  const piles = gameState.piles;
+  const pileLengths = gameState.pileLengths;
+  let i;
+
+  gameState.stringRepresentation = `
+    ST: ${Array.from(piles.stock.filter(card => card !== 255)).map(card => Card.asString(card)).join(',')}
+
+    FO: ${Array.from(piles.foundation.filter(card => card !== 255)).map(card => Card.asString(card)).join(',')}
+
+    T0: ${Array.from(piles.tableaux[0].filter(card => card !== 255)).map(card => Card.asString(card)).join(',')}
+    T1: ${Array.from(piles.tableaux[1].filter(card => card !== 255)).map(card => Card.asString(card)).join(',')}
+    T2: ${Array.from(piles.tableaux[2].filter(card => card !== 255)).map(card => Card.asString(card)).join(',')}
+    T3: ${Array.from(piles.tableaux[3].filter(card => card !== 255)).map(card => Card.asString(card)).join(',')}
+    T4: ${Array.from(piles.tableaux[4].filter(card => card !== 255)).map(card => Card.asString(card)).join(',')}
+    T5: ${Array.from(piles.tableaux[5].filter(card => card !== 255)).map(card => Card.asString(card)).join(',')}
+    T6: ${Array.from(piles.tableaux[6].filter(card => card !== 255)).map(card => Card.asString(card)).join(',')}
+  `
+    .split('\n')
+    .map(line => line.trim())
+    .join('\n');
+};
+
+/**
+ * A convenience method to get a string representation for a given gameState
+ * @param  {[type]} gameState [description]
+ * @return {[type]}           [description]
+ */
+Spiderette.asString = function(gameState) {
+  Spiderette.setStringRepresentation(gameState);
+  return gameState.stringRepresentation;
 };
 
 module.exports = Spiderette;
