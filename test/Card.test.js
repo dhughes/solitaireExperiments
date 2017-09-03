@@ -1,180 +1,147 @@
 const Card = require('../Card');
 
+// suit order: 0=c 1=d 2=h 3=s
+
+const kingOfSpadesFaceUp = Card.newCard(13, 3, true);
+const aceOfDiamondsFaceDown = Card.newCard(1, 1, false);
+const eightOfHeartsFaceUp = Card.newCard(8, 2, true);
+const tenOfClubsFaceUp = Card.newCard(10, 0, true);
+const unknownFaceDown = 0;
+const unknownFaceUp = 1;
+
 describe('Card', () => {
-  test('can create a card', () => {
-    expect(new Card()).not.toBeNull();
+  test('test cards are expected integer values', () => {
+    expect(kingOfSpadesFaceUp).toBe(111);
+    expect(aceOfDiamondsFaceDown).toBe(10);
+    expect(eightOfHeartsFaceUp).toBe(69);
   });
 
-  test('card has a value of 5', () => {
-    expect(new Card(5).getValue()).toBe(5);
+  test('asString gives correct string representation for card', () => {
+    expect(Card.asString(kingOfSpadesFaceUp)).toBe('[ KS]');
+    expect(Card.asString(aceOfDiamondsFaceDown)).toBe('( AD)');
+    expect(Card.asString(eightOfHeartsFaceUp)).toBe('[ 8H]');
+    expect(Card.asString(tenOfClubsFaceUp)).toBe('[10C]');
+    expect(Card.asString(unknownFaceUp)).toBe('[???]');
+    expect(Card.asString(unknownFaceDown)).toBe('(???)');
   });
 
-  test('card has a value of 10', () => {
-    expect(new Card(10).getValue()).toBe(10);
+  test('numericValue gives correct numeric value for card', () => {
+    expect(Card.numericValue(kingOfSpadesFaceUp)).toBe(13);
+    expect(Card.numericValue(aceOfDiamondsFaceDown)).toBe(1);
+    expect(Card.numericValue(eightOfHeartsFaceUp)).toBe(8);
   });
 
-  test('Jack has a value of 11', () => {
-    expect(Card.JACK).toBe(11);
+  test('value gives correct A,2,3...K value for card', () => {
+    expect(Card.value(kingOfSpadesFaceUp)).toBe('K');
+    expect(Card.value(aceOfDiamondsFaceDown)).toBe('A');
+    expect(Card.value(eightOfHeartsFaceUp)).toBe(8);
   });
 
-  test('card has a value of Jack', () => {
-    expect(new Card(Card.JACK).getValue()).toBe(Card.JACK);
+  test('suit gives correct C,D,H,S suit for card', () => {
+    expect(Card.suit(kingOfSpadesFaceUp)).toBe('S');
+    expect(Card.suit(aceOfDiamondsFaceDown)).toBe('D');
+    expect(Card.suit(eightOfHeartsFaceUp)).toBe('H');
   });
 
-  test('card has a value of Ace (which is 1)', () => {
-    expect(new Card(Card.ACE).getValue()).toBe(1);
+  test('numeric suit gives correct 1...4 suit for card', () => {
+    expect(Card.numericSuit(kingOfSpadesFaceUp)).toBe(3);
+    expect(Card.numericSuit(aceOfDiamondsFaceDown)).toBe(1);
+    expect(Card.numericSuit(eightOfHeartsFaceUp)).toBe(2);
   });
 
-  test('card has a suit of Clubs', () => {
-    expect(new Card(5, Card.CLUBS).getSuit()).toBe(Card.CLUBS);
+  test('isFaceUp gives correct 0 or 1 facing direction for card', () => {
+    expect(Card.isFaceUp(kingOfSpadesFaceUp)).toBe(1);
+    expect(Card.isFaceUp(aceOfDiamondsFaceDown)).toBe(0);
+    expect(Card.isFaceUp(eightOfHeartsFaceUp)).toBe(1);
+    expect(Card.isFaceUp(unknownFaceUp)).toBe(1);
+    expect(Card.isFaceUp(unknownFaceDown)).toBe(0);
   });
 
-  test('card has a suit of Spades', () => {
-    expect(new Card(5, Card.SPADES).getSuit()).toBe(Card.SPADES);
+  test('flip flips card', () => {
+    expect(Card.isFaceUp(Card.flip(kingOfSpadesFaceUp))).toBe(0);
+    expect(Card.isFaceUp(Card.flip(aceOfDiamondsFaceDown))).toBe(1);
+    expect(Card.isFaceUp(Card.flip(eightOfHeartsFaceUp))).toBe(0);
+    expect(Card.isFaceUp(Card.flip(unknownFaceUp))).toBe(0);
+    expect(Card.isFaceUp(Card.flip(unknownFaceDown))).toBe(1);
   });
 
-  test('card is facing up', () => {
-    expect(new Card(4, Card.SPADES, Card.UP).getFacing()).toBe(Card.UP);
+  test('fromString correctly parses value suit and direction', () => {
+    expect(Card.fromString('[ KS]')).toBe(kingOfSpadesFaceUp);
+    expect(Card.fromString('( AD)')).toBe(aceOfDiamondsFaceDown);
+    expect(Card.fromString('[ 8H]')).toBe(eightOfHeartsFaceUp);
+    expect(Card.fromString('[10C]')).toBe(tenOfClubsFaceUp);
+    expect(Card.fromString('[??]')).toBe(unknownFaceUp);
+    expect(Card.fromString('(??)')).toBe(unknownFaceDown);
+    expect(Card.fromString('[???]')).toBe(unknownFaceUp);
+    expect(Card.fromString('(???)')).toBe(unknownFaceDown);
   });
 
-  test('card is facing down', () => {
-    expect(new Card(4, Card.SPADES, Card.DOWN).getFacing()).toBe(Card.DOWN);
+  test('value of unknown card throws', () => {
+    expect(() => {
+      Card.value(unknownFaceUp);
+    }).toThrow(/Unknown Value/);
+
+    expect(() => {
+      Card.value(unknownFaceDown);
+    }).toThrow(/Unknown Value/);
   });
 
-  test('face up 5 of diamonds toString() returns [ 5♢]', () => {
-    expect(new Card(5, Card.DIAMONDS, Card.UP).toString()).toBe('[ 5♢]');
+  test('numericSuit of unknown card throws', () => {
+    expect(() => {
+      Card.numericSuit(unknownFaceUp);
+    }).toThrow(/Unknown Suit/);
+
+    expect(() => {
+      Card.numericSuit(unknownFaceDown);
+    }).toThrow(/Unknown Suit/);
   });
 
-  test('face up 10 of hearts toString() returns [10♡]', () => {
-    expect(new Card(10, Card.HEARTS, Card.UP).toString()).toBe('[10♡]');
+  test('suit of unknown card throws', () => {
+    expect(() => {
+      Card.suit(unknownFaceUp);
+    }).toThrow(/Unknown Suit/);
+
+    expect(() => {
+      Card.suit(unknownFaceDown);
+    }).toThrow(/Unknown Suit/);
   });
 
-  test("default unknown card toString() returns -???- since we don't know what it is or which way its facing", () => {
-    expect(new Card().toString()).toBe('-???-');
+  test('color of unknown card throws', () => {
+    expect(() => {
+      Card.color(unknownFaceUp);
+    }).toThrow(/Unknown Suit/);
+
+    expect(() => {
+      Card.color(unknownFaceDown);
+    }).toThrow(/Unknown Suit/);
   });
 
-  test('face down QUEEN of clubs toString() returns (***)', () => {
-    expect(new Card(Card.QUEEN, Card.CLUBS, Card.DOWN).toString()).toBe('(***)');
+  test('color of card is correct', () => {
+    expect(Card.color(kingOfSpadesFaceUp)).toBe(0);
+    expect(Card.color(aceOfDiamondsFaceDown)).toBe(1);
+    expect(Card.color(eightOfHeartsFaceUp)).toBe(1);
+    expect(Card.color(aceOfDiamondsFaceDown)).toBe(1);
   });
 
-  test('unknown card which is face down toString() returns (***)', () => {
-    expect(new Card(undefined, undefined, Card.DOWN).toString()).toBe('(***)');
-  });
+  test('frontString throws correct errors with bad input', () => {
+    expect(() => {
+      Card.fromString('[]');
+    }).toThrow(/Invalid/);
 
-  test("5 of spades face down toString(true) returns ( 5♠) because we're peeking at the values", () => {
-    expect(new Card(5, Card.SPADES, Card.DOWN).toString(true)).toBe('( 5♠)');
-  });
+    expect(() => {
+      Card.fromString('8]');
+    }).toThrow(/Invalid/);
 
-  test('parsing [ 5♡] gives us a five of hearts that is face up', () => {
-    const card = Card.parse('[ 5♡]');
+    expect(() => {
+      Card.fromString('[H');
+    }).toThrow(/Invalid/);
 
-    expect(card.getValue()).toBe(5);
-    expect(card.getSuit()).toBe(Card.HEARTS);
-    expect(card.getFacing()).toBe(Card.UP);
-  });
+    expect(() => {
+      Card.fromString('XX');
+    }).toThrow(/Invalid/);
 
-  test('parsing [***] gives us an unknown card that is face up', () => {
-    const card = Card.parse('[***]');
-
-    expect(card.getValue()).toBe(undefined);
-    expect(card.getSuit()).toBe(undefined);
-    expect(card.getFacing()).toBe(Card.UP);
-  });
-
-  test('parsing [???] gives us an unknown card that is face up', () => {
-    const card = Card.parse('[???]');
-
-    expect(card.getValue()).toBe(undefined);
-    expect(card.getSuit()).toBe(undefined);
-    expect(card.getFacing()).toBe(Card.UP);
-  });
-
-  test('parsing (***) gives us an unknown card that is face down', () => {
-    const card = Card.parse('(***)');
-
-    expect(card.getValue()).toBe(undefined);
-    expect(card.getSuit()).toBe(undefined);
-    expect(card.getFacing()).toBe(Card.DOWN);
-  });
-
-  test('parsing (???) gives us an unknown card that is face down', () => {
-    const card = Card.parse('(???)');
-
-    expect(card.getValue()).toBe(undefined);
-    expect(card.getSuit()).toBe(undefined);
-    expect(card.getFacing()).toBe(Card.DOWN);
-  });
-
-  test('parsing [10♠] gives us a 10 of spades that is face up', () => {
-    const card = Card.parse('[10♠]');
-
-    expect(card.getValue()).toBe(10);
-    expect(card.getSuit()).toBe(Card.SPADES);
-    expect(card.getFacing()).toBe(Card.UP);
-  });
-
-  test('parsing [ K♣] gives us a King of clubs that is face up', () => {
-    const card = Card.parse('[ K♣]');
-
-    expect(card.getValue()).toBe(Card.KING);
-    expect(card.getSuit()).toBe(Card.CLUBS);
-    expect(card.getFacing()).toBe(Card.UP);
-  });
-
-  test('parsing [ 2♢] and using toString() gives us [ 2♢]', () => {
-    const card = Card.parse('[ 2♢]');
-
-    expect(card.toString()).toBe('[ 2♢]');
-  });
-
-  test('two instances of 3 of hearts shows are equal using equals()', () => {
-    const card1 = new Card(3, Card.HEARTS, Card.UP);
-    const card2 = new Card(3, Card.HEARTS, Card.UP);
-    expect(card1.equals(card2)).toBe(true);
-  });
-
-  test('3 of hearts and 3 of spades are not equal using equals()', () => {
-    const card1 = new Card(3, Card.HEARTS, Card.UP);
-    const card2 = new Card(3, Card.SPADES, Card.UP);
-    expect(card1.equals(card2)).toBe(false);
-  });
-
-  test('face down 5 of diamonds toString(true) returns [ 5♢] because peek is true', () => {
-    expect(new Card(5, Card.DIAMONDS, Card.DOWN).toString(true)).toBe('( 5♢)');
-  });
-
-  test('face down 5 of diamonds toString() returns (***) because we are not peeking', () => {
-    expect(new Card(5, Card.DIAMONDS, Card.DOWN).toString()).toBe('(***)');
-  });
-
-  test('can flip card facing down to up', () => {
-    const card1 = new Card(3, Card.HEARTS, Card.DOWN);
-    card1.flip();
-    expect(card1.getFacing()).toBe(Card.UP);
-  });
-
-  test('cards facing down always show parenthesis', () => {
-    const card1 = new Card(3, Card.HEARTS, Card.DOWN);
-    expect(card1.toString()).toBe('(***)');
-    expect(card1.toString(true)).toBe('( 3♡)');
-  });
-
-  test('cards with unknown values that are facing down always show parenthesis', () => {
-    const card1 = new Card(undefined, undefined, Card.DOWN);
-    expect(card1.toString()).toBe('(***)');
-    expect(card1.toString(true)).toBe('(???)');
-  });
-
-  test('can parse face down 5 of hearts', () => {
-    const card = Card.parse('( 5♡)');
-
-    expect(card.getValue()).toBe(5);
-    expect(card.getSuit()).toBe(Card.HEARTS);
-    expect(card.getFacing()).toBe(Card.DOWN);
-  });
-
-  test("parsing card (???), which is face down, should match resulting card's toString() when we are peeking", () => {
-    const card = Card.parse('(???)');
-    expect(card.toString(true)).toBe('(???)');
+    expect(() => {
+      Card.fromString('(?H)');
+    }).toThrow(/Invalid/);
   });
 });

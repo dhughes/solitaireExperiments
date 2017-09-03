@@ -1,51 +1,51 @@
-const Spiderette = require('../Spiderette');
-const Deck = require('../Deck');
-const TableauMove = require('../TableauMove');
+// const Spiderette = require('../Spiderette');
+// const Deck = require('../Deck');
+//const TableauMove = require('../TableauMove');
 
 //console.log(Deck.shuffled().map(card => card.toString(true)).join(' '));
 
 describe('Spiderette', () => {
   test('can create new Spiderette game with a deck of cards', () => {
-    const game = new Spiderette(Deck.shuffled());
-    expect(game).not.toBeNull();
+    // const game = new Spiderette(Deck.shuffled());
+    // expect(game).not.toBeNull();
   });
 
-  test('expect toString() for an unshuffled deck to be particular pattern when all face up', () => {
-    const game = new Spiderette(Deck.deck());
-    expect(game.toString(true).replace(/[ \n]/g, '')).toBe(orderedFaceUp.replace(/[ \n]/g, ''));
-  });
-
-  test('expect toString() for an unshuffled deck to be particular pattern', () => {
-    const game = new Spiderette(Deck.deck());
-    expect(game.toString().replace(/[ \n]/g, '')).toBe(ordered.replace(/[ \n]/g, ''));
-  });
-
-  test('expect toString() for a shuffled deck NOT to match the standard pattern when all face up', () => {
-    const game = new Spiderette(Deck.shuffled());
-    expect(game.toString(true).replace(/[ \n]/g, '')).not.toBe(orderedFaceUp.replace(/[ \n]/g, ''));
-  });
-
-  test('expected that parsed game toString() matches the source string', () => {
-    const game = Spiderette.parse(randomGame1FaceUp);
-    expect(game.toString(true).replace(/[ \n]/g, '')).toBe(randomGame1FaceUp.replace(/[ \n]/g, ''));
-  });
-
-  test('can parse hard game 1', () => {
-    const game = Spiderette.parse(hardGame1);
-    expect(game.toString(true).replace(/[ \n]/g, '')).toBe(hardGame1.replace(/[ \n]/g, ''));
-  });
-
-  test('move queen to first king in hard game', () => {
-    const game = Spiderette.parse(hardGame1);
-    game.applyMove(new TableauMove(1, 6, 0));
-    expect(game.toString(true).replace(/[ \n]/g, '')).toBe(hardGame1_1.replace(/[ \n]/g, ''));
-  });
-
-  test('fail to move 6 to first king in hard game', () => {
-    const game = Spiderette.parse(hardGame1);
-    game.applyMove(new TableauMove(1, 5, 0));
-    expect(game.toString(true).replace(/[ \n]/g, '')).toBe(hardGame1.replace(/[ \n]/g, ''));
-  });
+  // test('expect toString() for an unshuffled deck to be particular pattern when all face up', () => {
+  //   const game = new Spiderette(Deck.deck());
+  //   expect(game.toString(true).replace(/[ \n]/g, '')).toBe(orderedFaceUp.replace(/[ \n]/g, ''));
+  // });
+  //
+  // test('expect toString() for an unshuffled deck to be particular pattern', () => {
+  //   const game = new Spiderette(Deck.deck());
+  //   expect(game.toString().replace(/[ \n]/g, '')).toBe(ordered.replace(/[ \n]/g, ''));
+  // });
+  //
+  // test('expect toString() for a shuffled deck NOT to match the standard pattern when all face up', () => {
+  //   const game = new Spiderette(Deck.shuffled());
+  //   expect(game.toString(true).replace(/[ \n]/g, '')).not.toBe(orderedFaceUp.replace(/[ \n]/g, ''));
+  // });
+  //
+  // test('expected that parsed game toString() matches the source string', () => {
+  //   const game = Spiderette.parse(randomGame1FaceUp);
+  //   expect(game.toString(true).replace(/[ \n]/g, '')).toBe(randomGame1FaceUp.replace(/[ \n]/g, ''));
+  // });
+  //
+  // test('can parse hard game 1', () => {
+  //   const game = Spiderette.parse(hardGame1);
+  //   expect(game.toString(true).replace(/[ \n]/g, '')).toBe(hardGame1.replace(/[ \n]/g, ''));
+  // });
+  //
+  // test('move queen to first king in hard game', () => {
+  //   const game = Spiderette.parse(hardGame1);
+  //   game.applyMove(new TableauMove(1, 6, 0));
+  //   expect(game.toString(true).replace(/[ \n]/g, '')).toBe(hardGame1_1.replace(/[ \n]/g, ''));
+  // });
+  //
+  // test('fail to move 6 to first king in hard game', () => {
+  //   const game = Spiderette.parse(hardGame1);
+  //   game.applyMove(new TableauMove(1, 5, 0));
+  //   expect(game.toString(true).replace(/[ \n]/g, '')).toBe(hardGame1.replace(/[ \n]/g, ''));
+  // });
 });
 
 /************************ GAMES ************************/
