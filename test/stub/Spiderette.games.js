@@ -39,3 +39,29 @@ module.exports.gameWithUnknownValues = `
   T4: (???),(???),(???),( 8H),[ KD]
   T5: ( QS),( QH),( 2S),( 9D),(10C),[ 6D]
   T6: (???),( 6H),( 6C),( 2H),( 7C),( 5C),[ QS]`;
+
+module.exports.sampleGame2 = `
+  ST: ( 4D),( KD),( 6C),( 4S),( AC),( 3D),( KH),( 8D),( 3C),( AH),( 5H),( 3S),( 4H),( 5D),( QC),( 3H),( 9D),( AS),( 7D),( 2D),( QH),( 8S),( 7H),( KS)
+
+  FO:
+
+  T0: [ JD]
+  T1: ( 5C),[10H],[ 9S]
+  T2: ( 5S),(10S),[ JH]
+  T3: ( AD),( 7C),[ 8H]
+  T4: ( JC),( 7S),( 4C),( 2C),[ 9H]
+  T5: ( KC),( 6D),( 8C),(10D),(10C),[ JS]
+  T6: ( 9C),( 6H),( 2H),( QS),( 6S),( 2S),[ QD]`;
+
+module.exports.sampleGame3 = `
+  ST: ( 4D),( KD),( 7H),( 4C),( AC),( 3D),( KH),( 8D),( 3C),( AH)
+
+  FO:
+
+  T0: [ JH],[10H],[ 9H],[ 8H],[ 7C],[ 2C],[ AD],[ 7D]
+  T1: [ QC],[ JC]
+  T2: [ 5C]
+  T3: [ JD],[ QH],[ 5D],[ 4H],[ 3H]
+  T4: [ 9D]
+  T5: ( KC),( 6D),( 8C),(10D),(10C),[ KS],[ QS],[ JS],[10S],[ 9S],[ 8S],[ 7S],[ 6S],[ 5S],[ 4S],[ 3S],[ 2S],[ AS]
+  T6: ( 9C),( 6H),( 2H),( QD),( 6C),[ 2D],[ 5H]`;

@@ -18,10 +18,10 @@ If a card's value is 1 it's unknown and face up
 
 The `Card` object can interpret this integer value and extract information such as the card's value, suit, and the direction its facing. 
 
-### Deck
+### `Deck`
 `Deck` is an object that can create a set of 52 card integers and shuffle them. It's mostly a convenience.
 
-### Klondike
+### `Klondike`
 Games are represented via a simple object called a "`GameState`". GameStates differ between games, but contain important information such as `Uint8Array`s for each pile in the game, an overall array of all data in the game, a score, a string representation of the game, and more. 
 
 The `Klondike` object knows how to manipulate Klondike GameStates. It can, for example:
@@ -43,7 +43,7 @@ To resolve this problem I decided to calculate a hash based on the current state
 ### Klondike Player
 The Player.klondike.js file contains a `Player` object that knows how to play Klondike. I can feed it any Klondike GameState and it will work through the game, trying to win it. It has a few strategies to make the best guesses. For example, if we have a card that is only one more than the _lowest_ value in any foundation cell, it always makes sense to make this move and skip all others. 
 
-### Spiderette
+### `Spiderette`
 I am mid-process in implementing Spiderette and its associated Player. Right now, the `Spiderette` object can create games and update the GameState. It can't execute any moves. Also, I haven't started on the Spiderette Player yet. 
 
 ### Tests

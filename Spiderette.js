@@ -121,6 +121,11 @@ Spiderette.updatePileLengths = function(gameState, specificPiles) {
         gameState.pileLengths[specificPiles[i].pile][specificPiles[i].index] = gameState.piles[specificPiles[i].pile][
           specificPiles[i].index
         ].len();
+      } else if (specificPiles[i].pile === 'tableaux' && !specificPiles[i].index) {
+        // we need to update all tableaux lengths
+        gameState.piles.tableaux.forEach((tableaux, t) => {
+          gameState.pileLengths.tableaux[t] = tableaux.len();
+        });
       } else {
         gameState.pileLengths[specificPiles[i].pile] = gameState.piles[specificPiles[i].pile].len();
       }
@@ -254,6 +259,77 @@ Spiderette.setStringRepresentation = function(gameState) {
 Spiderette.asString = function(gameState) {
   Spiderette.setStringRepresentation(gameState);
   return gameState.stringRepresentation;
+};
+
+/**
+ * Makes a move as specified by the move object.  If this move wins the game the won attribute is set to true!
+ * @param {Object} move The move to make.
+ */
+Spiderette.doMove = function(gameState, move) {
+  // default the count, if need be
+  move.count = move.count || 1;
+
+  // get the piles from the gameState
+  let piles = gameState.piles;
+  let pileLengths = gameState.pileLengths;
+
+  let from = piles[move.from];
+  let fromLen = pileLengths[move.from];
+
+  if (move.fromIndex !== undefined) {
+    from = from[move.fromIndex];
+    fromLen = fromLen[move.fromIndex];
+  }
+
+  let to = piles[move.to];
+  if (move.toIndex !== undefined) {
+    to = to[move.toIndex];
+  }
+
+  // figure out the index of what we're moving
+  let start = fromLen - move.count;
+  let end = fromLen;
+  let i, card;
+
+  // if we're moving to or from the stock we need to loop backwards, otherwise we loop forward and move the cards to the to pile
+  if (move.from === 'stock') {
+    // loop backwards
+    let tableau = 0;
+    for (i = end - 1; i >= end - 7 && i !== 255; i--) {
+      // remove the card
+      card = from[i];
+      from[i] = 255;
+      // flip this card to the target
+      if (card !== 255) {
+        to[tableau++].push(Card.flip(card));
+        //console.log(i + ": " + card + "/" + Card.asString(card !== 255 && Card.isFaceUp(card) ? card : Card.flip(card)));
+      }
+    }
+  } else {
+    // loop forward
+    for (i = start; i < end; i++) {
+      // remove the card
+      card = from[i];
+      from[i] = 255;
+      // add this card to the target
+      to.push(card);
+      //console.log(i + ": " + Card.asString(card));
+    }
+
+    // make sure the exposed card is face up
+    card = from[fromLen - move.count - 1];
+    if (card !== 255 && !Card.isFaceUp(card)) {
+      from[fromLen - move.count - 1] = Card.flip(card);
+    }
+  }
+
+  // update the game's state
+  Spiderette.updateState(gameState, [
+    { pile: move.from, index: move.fromIndex },
+    { pile: move.to, index: move.toIndex }
+  ]);
+
+  //console.log(gameState.stringRepresentation.indent(1));
 };
 
 module.exports = Spiderette;

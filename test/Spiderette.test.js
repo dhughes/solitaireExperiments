@@ -180,5 +180,92 @@ describe('Spiderette', () => {
     expect(gameState.stringRepresentation).not.toBe('');
   });
 
-  // todo: test assorted moves (tableaux to tableaux, stock to tableaux, moving a full stack to the foundation)
+  test('test moving tableau to tableau', () => {
+    let gameState = Mockette.createGame(gameStates.sampleGame2, 1);
+
+    let move = {
+      from: 'tableaux',
+      fromIndex: 5,
+      count: 1,
+      to: 'tableaux',
+      toIndex: 6
+    };
+
+    // do the move
+    Spiderette.doMove(gameState, move);
+
+    expect(gameState.piles.tableaux[6].len()).toBe(8);
+    expect(gameState.piles.tableaux[5].len()).toBe(5);
+    // expect the last card in 5 to be face up
+    expect(Card.isFaceUp(gameState.piles.tableaux[5].last())).toBe(1);
+  });
+
+  test('test moving multiple tableau to tableau', () => {
+    let gameState = Mockette.createGame(gameStates.sampleGame2, 1);
+
+    let move = {
+      from: 'tableaux',
+      fromIndex: 1,
+      count: 2,
+      to: 'tableaux',
+      toIndex: 0
+    };
+
+    // do the move
+    Spiderette.doMove(gameState, move);
+
+    expect(gameState.piles.tableaux[0].len()).toBe(3);
+    expect(gameState.piles.tableaux[1].len()).toBe(1);
+    // expect the last card in 1 to be face up
+    expect(Card.isFaceUp(gameState.piles.tableaux[1].last())).toBe(1);
+  });
+
+  test('test drawing from the stock to the tableau', () => {
+    let gameState = Mockette.createGame(gameStates.sampleGame1, 1);
+
+    let move = {
+      from: 'stock',
+      to: 'tableaux'
+    };
+
+    // do the move
+    Spiderette.doMove(gameState, move);
+
+    expect(gameState.piles.tableaux[0].len()).toBe(4);
+    expect(gameState.piles.tableaux[1].len()).toBe(5);
+    expect(gameState.piles.tableaux[2].len()).toBe(4);
+    expect(gameState.piles.tableaux[3].len()).toBe(2);
+    expect(gameState.piles.tableaux[4].len()).toBe(4);
+    expect(gameState.piles.tableaux[5].len()).toBe(7);
+    expect(gameState.piles.tableaux[6].len()).toBe(9);
+
+    // expect the last cards in tableaux to be face up
+    expect(Card.isFaceUp(gameState.piles.tableaux[0].last())).toBe(1);
+    expect(Card.isFaceUp(gameState.piles.tableaux[1].last())).toBe(1);
+    expect(Card.isFaceUp(gameState.piles.tableaux[2].last())).toBe(1);
+    expect(Card.isFaceUp(gameState.piles.tableaux[3].last())).toBe(1);
+    expect(Card.isFaceUp(gameState.piles.tableaux[4].last())).toBe(1);
+    expect(Card.isFaceUp(gameState.piles.tableaux[5].last())).toBe(1);
+    expect(Card.isFaceUp(gameState.piles.tableaux[6].last())).toBe(1);
+  });
+
+  test('test moving full stack to foundation', () => {
+    let gameState = Mockette.createGame(gameStates.sampleGame3, 1);
+
+    let move = {
+      from: 'tableaux',
+      fromIndex: 5,
+      count: 13,
+      to: 'foundation'
+    };
+
+    // do the move
+    Spiderette.doMove(gameState, move);
+
+    expect(gameState.piles.foundation.len()).toBe(13);
+    expect(gameState.piles.tableaux[5].len()).toBe(5);
+
+    // expect the last cards in tableaux to be face up
+    expect(Card.isFaceUp(gameState.piles.tableaux[5].last())).toBe(1);
+  });
 });

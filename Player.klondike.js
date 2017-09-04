@@ -30,7 +30,7 @@ Player.savedStates = {};
 Player.saveState = function(gameState) {
   //console.log("saving state for hash: " + gameState.hash);
   if (Player.savedStates[gameState.hash] === undefined) {
-    var data = new Uint8Array(212);
+    var data = new Uint8Array(gameState.data.length);
     data.set(gameState.data);
 
     var foundationLengths = new Uint8Array(4);
