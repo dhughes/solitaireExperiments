@@ -295,7 +295,7 @@ Spiderette.doMove = function(gameState, move) {
   if (move.from === 'stock') {
     // loop backwards
     let tableau = 0;
-    for (i = end - 1; i >= end - 7 && i !== 255; i--) {
+    for (i = end - 1; from[i] && i >= end - 7 && i !== 255; i--) {
       // remove the card
       card = from[i];
       from[i] = 255;

@@ -212,7 +212,7 @@ Player.identifyMoves = function(gameState, collection) {
 
     // are we moving the last card out of this tableau?
     // todo: test in unit test
-    if (from[1] === 0) {
+    if (from[1] === 255) {
       bonus++;
     }
 

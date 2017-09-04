@@ -249,6 +249,26 @@ describe('Spiderette', () => {
     expect(Card.isFaceUp(gameState.piles.tableaux[6].last())).toBe(1);
   });
 
+  test('drawing last three cards from stock only adds to first three tableaux', () => {
+    let gameState = Mockette.createGame(gameStates.sampleGame9, 1);
+
+    let move = {
+      from: 'stock',
+      to: 'tableaux'
+    };
+
+    // do the move
+    Spiderette.doMove(gameState, move);
+
+    expect(gameState.piles.tableaux[0].len()).toBe(5);
+    expect(gameState.piles.tableaux[1].len()).toBe(1);
+    expect(gameState.piles.tableaux[2].len()).toBe(1);
+    expect(gameState.piles.tableaux[3].len()).toBe(7);
+    expect(gameState.piles.tableaux[4].len()).toBe(6);
+    expect(gameState.piles.tableaux[5].len()).toBe(17);
+    expect(gameState.piles.tableaux[6].len()).toBe(15);
+  });
+
   test('test moving full stack to foundation', () => {
     let gameState = Mockette.createGame(gameStates.sampleGame3, 1);
 
