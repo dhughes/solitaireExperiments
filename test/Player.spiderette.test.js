@@ -162,7 +162,7 @@ describe('Player', () => {
   //
   test('evaluate random Spiderette game for winnability', done => {
     const gameState = Spiderette.newGame(1);
-    Player.maxMoves = 500;
+    Player.maxMoves = 50000;
     console.log(Spiderette.asString(gameState));
     Player.isWinnable(gameState, (won, moves, finalState) => {
       console.log(won, moves);

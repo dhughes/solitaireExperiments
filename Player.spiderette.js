@@ -271,17 +271,13 @@ Player.identifyMoves = function(gameState, collection) {
       //if (f === 5 && fromLen - c === 2) console.log(moveScore);
 
       // deduct points if we would break up a stack
-      moveScore += c !== 0 && Card.numericValue(from[c - 1]) === Card.numericValue(card) + 1 ? -2 : 0;
-      //if (f === 5 && fromLen - c === 2) console.log(moveScore);
-
-      // deduct points if we would break up a sequential stack
-      moveScore +=
-        c !== 0 &&
-        Card.numericValue(from[c - 1]) === Card.numericValue(card) + 1 &&
-        Card.numericSuit(from[c - 1]) === Card.numericSuit(card)
-          ? -1
-          : 0;
-      //if (f === 5 && fromLen - c === 2) console.log(moveScore);
+      if (c !== 0 && Card.numericValue(from[c - 1]) === Card.numericValue(card) + 1) {
+        moveScore -= 4;
+        // deduct more if the cards are of the same suit
+        if (Card.numericSuit(from[c - 1]) === Card.numericSuit(card)) {
+          moveScore -= 4;
+        }
+      }
 
       // we can always potentially move this card
       potentialMoves.push({
