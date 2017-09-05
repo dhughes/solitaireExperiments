@@ -128,28 +128,28 @@ Player.isWinnable = function(gameState, callback) {
       //console.log("nullifying state in cache");
       Player.savedStates[move.hash] = null;
     }
-
-    let log = '------------------------\n';
-    log += 'Before Hash: ' + gameState.hash + '\n';
-    log += 'Before State Score: ' + gameState.stateScore + '\n';
-    log += Spiderette.asString(gameState);
-    log += '\n';
-
-    //console.log(move.asString());
+    //
+    // let log = '------------------------\n';
+    // log += 'Before Hash: ' + gameState.hash + '\n';
+    // log += 'Before State Score: ' + gameState.stateScore + '\n';
+    // log += 'Move Score: ' + move.moveScore + '\n';
+    // log += 'Total Score: ' + (gameState.stateScore + move.moveScore) + '\n';
+    // log += Spiderette.asString(gameState);
+    // log += '\n';
 
     // to do this move on the specified state!  This will update the gameState.
     //let oldHash = gameState.hash;
     Spiderette.doMove(gameState, move);
     //gameState.previousState = oldHash;
 
-    log += Spiderette.asString(gameState);
-    log += '\nAfter Hash: ' + gameState.hash;
-    log += '\nAfter State Score: ' + gameState.stateScore + '\n';
-    console.log(log);
+    // log += Spiderette.asString(gameState);
+    // log += '\nAfter Hash: ' + gameState.hash;
+    // log += '\nAfter State Score: ' + gameState.stateScore + '\n';
+    // console.log(log);
 
     // did we win?
     if (gameState.won) {
-      callback(true, Player.moves);
+      callback(true, Player.moves, gameStte);
       return;
     }
 
@@ -163,6 +163,7 @@ Player.isWinnable = function(gameState, callback) {
       Player.identifyMoves(gameState, Player.priorities);
     }
   }
+
   // there's no winning this game :(
   callback(false, Player.moves, gameState);
 };
@@ -216,7 +217,7 @@ Player.identifyMoves = function(gameState, collection) {
 
     collection.add({
       stateScore: gameState.stateScore,
-      moveScore: 20,
+      moveScore: 50,
       from: 'tableaux',
       fromIndex: f,
       to: 'foundation',
@@ -232,78 +233,84 @@ Player.identifyMoves = function(gameState, collection) {
   // we're going to first identify cards and stacks that we can potentially move
   let potentialMoves = [];
 
-  // loop over each tableau to try moving from
+  // loop over each tableau to determine what we can move _from_
   for (f = 0; f < piles.tableaux.length; f++) {
     from = piles.tableaux[f];
     fromLen = pileLengths.tableaux[f];
 
     // loop backwards over the cards in this tableau and identify potential stacks to move
-    let sequentialSuit = true;
+    let pushedPotentialMove = false;
     for (
       var c = fromLen - 1;
       c !== 255 && Card.isFaceUp(from[c]) && (c === fromLen - 1 || Card.numericValue(from[c]) === cardNumericValue + 1);
       c--
     ) {
-      let moveScore = fromLen - c + 1;
+      // get this card
       card = from[c];
 
+      // get this card's numeric suit and value
       cardNumericSuit = Card.numericSuit(card);
-
       cardNumericValue = Card.numericValue(card);
 
-      // check to see if we're working with a sequential-suit stack
-      if (sequentialSuit && c < fromLen - 1) {
-        sequentialSuit = sequentialSuit && cardNumericSuit === Card.numericSuit(from[c + 1]);
-      }
+      // create an object for this potential move
+      let potentialMove = {
+        from: 'tableaux',
+        fromIndex: f,
+        card,
+        cardIndex: c,
+        complete: false
+      };
 
-      //if (f === 5 && fromLen - c === 2) console.log(moveScore);
-
-      // give bonus points for sequential-suit stacks
-      moveScore += sequentialSuit && c !== fromLen - 1 ? 1 : 0;
-      //if (f === 5 && fromLen - c === 2) console.log(moveScore);
-
-      // give bonus points for move that would empty a tableau
-      moveScore += c === 0 ? 2 : 0;
-      //if (f === 5 && fromLen - c === 2) console.log(moveScore);
-
-      // give bonus points for moves that would expose a face-down card
-      moveScore += c !== 0 && !Card.isFaceUp(from[c - 1]) ? 1 : 0;
-      //if (f === 5 && fromLen - c === 2) console.log(moveScore);
-
-      // deduct points if we would break up a stack
-      if (c !== 0 && Card.numericValue(from[c - 1]) === Card.numericValue(card) + 1) {
-        moveScore -= 4;
-        // deduct more if the cards are of the same suit
-        if (Card.numericSuit(from[c - 1]) === Card.numericSuit(card)) {
-          moveScore -= 4;
+      // is the starting card? if so, it's individual by fiat
+      if (c === fromLen - 1) {
+        potentialMove.fromType = 'individual';
+      } else {
+        // is this a sequential suit stack?
+        let previousPotentialMove = potentialMoves[potentialMoves.length - 1];
+        if (
+          (previousPotentialMove.fromType === 'individual' || previousPotentialMove.fromType === 'sequential-suit') &&
+          Card.numericSuit(previousPotentialMove.card) === Card.numericSuit(card) &&
+          Card.numericValue(previousPotentialMove.card) + 1 === Card.numericValue(card)
+        ) {
+          // this is a sequential-suit stack
+          potentialMove.fromType = 'sequential-suit';
+        } else {
+          potentialMove.fromType = 'sequential';
         }
       }
 
-      // we can always potentially move this card
-      potentialMoves.push({
-        from: 'tableaux',
-        fromIndex: f,
-        count: fromLen - c,
-        to: 'tableaux',
-        moveScore: moveScore++,
-        sequentialSuit
-      });
+      // add this potential move to the set of potentialMoves
+      potentialMoves.push(potentialMove);
+      pushedPotentialMove = true;
+    }
+
+    // mark the last potential move as being complete (IE: the entire stack or individual card)
+    if (pushedPotentialMove) {
+      potentialMoves[potentialMoves.length - 1].complete = true;
     }
   }
 
-  let firstEmptyTableau = null;
+  // find the first empty tableau
+  let firstEmptyTableau = piles.tableaux.reduce(
+    (acc, tableau, i) => (acc ? acc : tableau.len() === 0 ? i : null),
+    null
+  );
+
+  // determine if the stock is empty
   let stockIsEmpty = pileLengths.stock === 0;
 
   // now, let's find places where we can actually move the potential moves
   for (let potentialMove of potentialMoves) {
-    // find the card we're trying to move
+    // find the card we're trying to MOVE
     from = piles.tableaux[potentialMove.fromIndex];
-    card = from[from.len() - potentialMove.count];
+    card = from[potentialMove.cardIndex];
 
     // find potential matches for this card
     for (t = 0; t < piles.tableaux.length; t++) {
       // don't try moving to the same tableau
       if (potentialMove.fromIndex == t) continue;
+
+      // create an object to hold this move (based off the potentialMove)
       let thisMove = Object.assign({}, potentialMove);
 
       // get a handle on the target pile and its last card
@@ -311,75 +318,30 @@ Player.identifyMoves = function(gameState, collection) {
       toLen = pileLengths.tableaux[t];
       lastCard = to[to.len() - 1];
 
-      if (!firstEmptyTableau && !toLen) {
-        firstEmptyTableau = t;
-      }
+      // is the target tableau empty?
+      if (toLen === 0) {
+        // is the stock empty? is this NOT the first empty tableau? if so, skip outta here
+        if (stockIsEmpty && t !== firstEmptyTableau) continue;
 
-      // is this tableau empty? If so, we can always move to it (unless the stock is empty and this isn't the first open tableau)
-      if (!toLen && (!stockIsEmpty || t === firstEmptyTableau)) {
-        // we can always potentially move this card
+        // this is a legal move to an empty tableau
+        thisMove.toType = 'empty';
+      } else {
+        // would this be a sequential move? if not, skip outta here!
+        if (Card.numericValue(lastCard) !== Card.numericValue(potentialMove.card) + 1) continue;
 
-        // in general, we don't want to do a lot of moves to empty tableaux. reset the score to be pretty low
-        thisMove.moveScore = 0;
-
-        collection.add(
-          Object.assign({}, thisMove, { toIndex: t, stateScore: gameState.stateScore, hash: gameState.hash })
-        );
-
-        continue;
-      }
-
-      //is the last card's value one larger than the card being moved?
-      if (Card.numericValue(lastCard) === Card.numericValue(card) + 1) {
-        // this is a move that can be made!!
-        thisMove.toIndex = t;
-        // if (thisMove.fromIndex === 1) {
-        //   console.log('---');
-        //   console.log(thisMove);
-        // }
-        // is the potential move a sequential-suit one?
-        // and, does the suit of the card being moved match that of the target?
-        if (thisMove.sequentialSuit && Card.numericSuit(lastCard) === Card.numericSuit(card)) {
-          thisMove.moveScore += 1;
+        if (Card.numericSuit(lastCard) === Card.numericSuit(potentialMove.card)) {
+          thisMove.toType = 'sequential-suit';
+        } else {
+          thisMove.toType = 'sequential';
         }
-
-        // if (thisMove.fromIndex === 1) {
-        //   console.log(thisMove);
-        // }
-
-        // give bonus points for size of stack (and continuing matching suit)
-        let previousCard = lastCard;
-
-        // if (thisMove.fromIndex === 1) {
-        //   console.log(Card.asString(lastCard));
-        // }
-        for (
-          let s = to.len() - 2;
-          s !== 255 && Card.isFaceUp(to[s]) && Card.numericValue(to[s]) === Card.numericValue(lastCard) + 1;
-          s--
-        ) {
-          // if (thisMove.fromIndex === 1) {
-          //   console.log('test');
-          // }
-          // this continues to be sequential
-          thisMove.moveScore += 1;
-
-          // does this continue a sequential-suit stack?
-          thisMove.sequentialSuit =
-            thisMove.sequentialSuit && Card.numericSuit(previousCard) === Card.numericSuit(to[s]);
-
-          // if this continues a sequential-suit stack, keep giving bonus points
-          thisMove.moveScore += thisMove.sequentialSuit ? 1 : 0;
-
-          lastCard = to[s];
-        }
-
-        // if (thisMove.fromIndex === 1) {
-        //   console.log(thisMove);
-        // }
-        collection.add(Object.assign({}, thisMove, { stateScore: gameState.stateScore, hash: gameState.hash }));
-        identifiedMoves++;
       }
+
+      thisMove.to = 'tableaux';
+      thisMove.toIndex = t;
+
+      Player.scoreTableauxMove(thisMove);
+
+      collection.add(Object.assign({}, thisMove, { stateScore: gameState.stateScore, hash: gameState.hash }));
     }
   }
 
@@ -387,11 +349,74 @@ Player.identifyMoves = function(gameState, collection) {
   if (pileLengths.stock && piles.tableaux.filter(pile => pile.len() === 0).length === 0) {
     collection.add({
       stateScore: gameState.stateScore,
-      moveScore: 1,
+      moveScore: 4,
       from: 'stock',
       to: 'tableaux',
       hash: gameState.hash
     });
+  }
+};
+
+Player.scoreTableauxMove = function(move) {
+  let { complete, fromType, toType, cardIndex } = move;
+
+  if (complete && fromType === 'sequential-suit' && toType === 'sequential-suit' && cardIndex === 0) {
+    // full sequential-suit to sequential-suit from zero index
+    move.moveScore = 20;
+  } else if (complete && fromType === 'sequential-suit' && toType === 'sequential-suit' && cardIndex !== 0) {
+    // full sequential-suit to sequential-suit not from zero index
+    move.moveScore = 19;
+  } else if (complete && fromType === 'sequential' && toType === 'sequential-suit' && cardIndex === 0) {
+    // full sequential to sequential-suit from zero index
+    move.moveScore = 18;
+  } else if (complete && fromType === 'sequential' && toType === 'sequential-suit' && cardIndex !== 0) {
+    // full sequential to sequential-suit not from zero index
+    move.moveScore = 17;
+  } else if (complete && fromType === 'sequential' && toType === 'sequential' && cardIndex === 0) {
+    // full sequential to sequential from zero index
+    move.moveScore = 16;
+  } else if (complete && fromType === 'sequential' && toType === 'sequential' && cardIndex !== 0) {
+    // full sequential to sequential not from zero index
+    move.moveScore = 15;
+  } else if (complete && fromType === 'sequential-suit' && toType === 'empty' && cardIndex !== 0) {
+    // full sequential-suit to empty tableau not from zero index
+    move.moveScore = 14;
+  } else if (complete && fromType === 'sequential' && toType === 'empty' && cardIndex !== 0) {
+    // full sequential to empty tableau not from zero index
+    move.moveScore = 13;
+  } else if (complete && fromType === 'individual' && toType === 'sequential-suit' && cardIndex === 0) {
+    // lone individual to sequential-suit from zero index
+    move.moveScore = 12;
+  } else if (complete && fromType === 'individual' && toType === 'sequential-suit' && cardIndex !== 0) {
+    // lone individual to sequential-suit not from zero index
+    move.moveScore = 11;
+  } else if (complete && fromType === 'individual' && toType === 'sequential' && cardIndex === 0) {
+    // lone individual to sequential from zero index
+    move.moveScore = 10;
+  } else if (complete && fromType === 'individual' && toType === 'sequential' && cardIndex !== 0) {
+    // lone individual to sequential not from zero index
+    move.moveScore = 9;
+  } else if (complete && fromType === 'individual' && toType === 'empty' && cardIndex !== 0) {
+    // lone individual to empty tableau not from zero index
+    move.moveScore = 8;
+  } else if (complete && fromType === 'sequential-suit' && toType === 'empty' && cardIndex === 0) {
+    // full sequential-suit to empty tableau from zero index
+    move.moveScore = 7;
+  } else if (complete && fromType === 'sequential' && toType === 'empty' && cardIndex === 0) {
+    // full sequential to empty tableau from zero index
+    move.moveScore = 6;
+  } else if (complete && fromType === 'individual' && toType === 'empty' && cardIndex === 0) {
+    // lone individual to empty tableau from zero index
+    move.moveScore = 5;
+  } else if (!complete && toType === 'sequential-suit') {
+    // partial sequence/suit to sequential-suit not from zero index
+    move.moveScore = 3;
+  } else if (!complete && toType === 'sequential') {
+    // partial sequence/suit to sequential not from zero index
+    move.moveScore = 2;
+  } else if (!complete && toType === 'empty') {
+    // partial sequence/suit to empty tableau not from zero index
+    move.moveScore = 1;
   }
 };
 

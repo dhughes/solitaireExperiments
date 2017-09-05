@@ -48,6 +48,14 @@ describe('Player', () => {
     expect(queue.size()).toBe(9);
   });
 
+  test('identifies several valid moves for game 7', () => {
+    // try to identify possible moves.
+    var queue = Player.createPriorityQueue();
+    Player.identifyMoves(sampleGame7, queue);
+
+    expect(queue.size()).toBe(queue.size());
+  });
+
   test('identifies moves to empty tableau', () => {
     // try to identify possible moves.
     var queue = Player.createPriorityQueue();
@@ -98,21 +106,21 @@ describe('Player', () => {
     expect(queue.toArray().filter(move => move.from === 'stock').length).toBe(1);
   });
 
-  test('identifies moving 9h to 10d before 9h to 10c due to it being a longer stack', () => {
-    var queue = Player.createPriorityQueue();
-    Player.identifyMoves(sampleGame10, queue);
-
-    // iterate through the queue and make sure we see t1 to t0 before we see t1 to t4
-    let move;
-    while ((move = queue.dequeue())) {
-      if (move.from === 'tableaux' && move.fromIndex === 1 && move.to === 'tableaux' && move.toIndex === 0) {
-        break;
-      }
-      if (move.from === 'tableaux' && move.fromIndex === 1 && move.to === 'tableaux' && move.toIndex === 4) {
-        fail('found t4 before t0');
-      }
-    }
-  });
+  // test('identifies moving 9h to 10d before 9h to 10c due to it being a longer stack', () => {
+  //   var queue = Player.createPriorityQueue();
+  //   Player.identifyMoves(sampleGame10, queue);
+  //
+  //   // iterate through the queue and make sure we see t1 to t0 before we see t1 to t4
+  //   let move;
+  //   while ((move = queue.dequeue())) {
+  //     if (move.from === 'tableaux' && move.fromIndex === 1 && move.to === 'tableaux' && move.toIndex === 0) {
+  //       break;
+  //     }
+  //     if (move.from === 'tableaux' && move.fromIndex === 1 && move.to === 'tableaux' && move.toIndex === 4) {
+  //       fail('found t4 before t0');
+  //     }
+  //   }
+  // });
 
   test('favors drawing from stock over breaking up stack', () => {
     var queue = Player.createPriorityQueue();
@@ -128,26 +136,32 @@ describe('Player', () => {
     }
   });
 
-  test('identify moves from game 13', () => {
-    var queue = Player.createPriorityQueue();
+  test('stateScore for game 7 should be 15', () => {
+    //Spiderette.updateScore(sampleGame7);
 
-    Player.identifyMoves(sampleGame13, queue);
-
-    while ((move = queue.dequeue())) {
-      console.log(move);
-    }
+    expect(sampleGame7.stateScore).toBe(15);
   });
+
+  // test('identify moves from game 13', () => {
+  //   var queue = Player.createPriorityQueue();
+  //
+  //   Player.identifyMoves(sampleGame13, queue);
+  //
+  //   while ((move = queue.dequeue())) {
+  //     console.log(move);
+  //   }
+  // });
 
   test('play game 12', done => {
     var queue = Player.createPriorityQueue();
 
-    Player.maxMoves = 500;
+    Player.maxMoves = 50;
 
     console.log(Spiderette.asString(sampleGame12));
 
     Player.isWinnable(sampleGame12, (won, moves, finalState) => {
-      console.log(won, moves);
-      // console.log(Spiderette.asString(finalState));
+      console.log('dfsfdfdsfds', won, moves, finalState.stateScore);
+      console.log(Spiderette.asString(finalState));
       // asserts that the callback was invoked
       done();
     });
@@ -162,11 +176,11 @@ describe('Player', () => {
   //
   test('evaluate random Spiderette game for winnability', done => {
     const gameState = Spiderette.newGame(1);
-    Player.maxMoves = 50000;
+    Player.maxMoves = 1000000;
     console.log(Spiderette.asString(gameState));
     Player.isWinnable(gameState, (won, moves, finalState) => {
-      console.log(won, moves);
-      // console.log(Spiderette.asString(finalState));
+      console.log(won, moves, finalState.stateScore);
+      console.log(Spiderette.asString(finalState));
       // asserts that the callback was invoked
       done();
     });

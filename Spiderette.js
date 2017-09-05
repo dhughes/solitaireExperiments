@@ -177,26 +177,31 @@ Spiderette.updateScore = function(gameState) {
   let piles = gameState.piles;
   let pileLengths = gameState.pileLengths;
 
-  // add the foundations into the score
-  gameState.stateScore += pileLengths.foundation * 2;
+  // todo: count every card build sequentialy downward
+  // tell if we're making good progress in the game
 
-  // add the tableaux into the score
+  // add the foundations into the score
+  gameState.stateScore += pileLengths.foundation * 4;
+
+  // determine the score for each tableau
   for (t = 0; t < piles.tableaux.length; t++) {
+    let pile = piles.tableaux[t];
     // loop backwards over this foundation until we find a card that's not face up
-    for (let c = piles.tableaux[t].length - 1; c !== 255; c--) {
-      let card = piles.tableaux[t][c];
-      if (card !== 255) {
-        if (Card.isFaceUp(card)) {
-          gameState.stateScore++;
-        } else {
-          break;
-        }
+    for (let c = pile.len() - 2; c >= 0 && Card.isFaceUp(pile[c]); c--) {
+      let card = pile[c];
+
+      if (Card.numericValue(card) === Card.numericValue(pile[c + 1]) + 1) {
+        gameState.stateScore += 2;
+      }
+
+      if (Card.numericSuit(card) === Card.numericSuit(pile[c + 1])) {
+        gameState.stateScore += 2;
       }
     }
   }
 
   // check if we won!
-  if (gameState.stateScore === 104) {
+  if (gameState.stateScore === 208) {
     gameState.won = true;
   } else {
     gameState.won = false;
