@@ -136,11 +136,11 @@ describe('Player', () => {
     }
   });
 
-  test('stateScore for game 7 should be 15', () => {
-    //Spiderette.updateScore(sampleGame7);
-
-    expect(sampleGame7.stateScore).toBe(15);
-  });
+  // test('stateScore for game 7 should be 15', () => {
+  //   //Spiderette.updateScore(sampleGame7);
+  //
+  //   expect(sampleGame7.stateScore).toBe(15);
+  // });
 
   // test('identify moves from game 13', () => {
   //   var queue = Player.createPriorityQueue();
@@ -157,11 +157,11 @@ describe('Player', () => {
 
     Player.maxMoves = 50;
 
-    console.log(Spiderette.asString(sampleGame12));
+    //console.log(Spiderette.asString(sampleGame12));
 
     Player.isWinnable(sampleGame12, (won, moves, finalState) => {
-      console.log('dfsfdfdsfds', won, moves, finalState.stateScore);
-      console.log(Spiderette.asString(finalState));
+      //console.log('dfsfdfdsfds', won, moves, finalState.stateScore);
+      //console.log(Spiderette.asString(finalState));
       // asserts that the callback was invoked
       done();
     });
@@ -174,15 +174,15 @@ describe('Player', () => {
   //   });
   // });
   //
-  test('evaluate random Spiderette game for winnability', done => {
-    const gameState = Spiderette.newGame(1);
-    Player.maxMoves = 1000000;
-    console.log(Spiderette.asString(gameState));
-    Player.isWinnable(gameState, (won, moves, finalState) => {
-      console.log(won, moves, finalState.stateScore);
-      console.log(Spiderette.asString(finalState));
-      // asserts that the callback was invoked
-      done();
-    });
-  });
+  // test('evaluate random Spiderette game for winnability', done => {
+  //   const gameState = Spiderette.newGame(1);
+  //   Player.maxMoves = 1000000;
+  //   console.log(Spiderette.asString(gameState));
+  //   Player.isWinnable(gameState, (won, moves, finalState) => {
+  //     console.log(won, moves, finalState.stateScore);
+  //     console.log(Spiderette.asString(finalState));
+  //     // asserts that the callback was invoked
+  //     done();
+  //   });
+  // });
 });

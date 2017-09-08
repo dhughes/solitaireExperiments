@@ -9,7 +9,7 @@ Deck = {};
  * @returns {Uint8Array} The array of cards
  */
 Deck.newDeck = function() {
-  var deck = new Uint8Array(52);
+  const deck = new Uint8Array(52);
 
   // loop from 0 to 3 for suits
   var i = -1;
@@ -30,19 +30,20 @@ Deck.newDeck = function() {
  * @param {Uint8Array} deck The array of cards to shuffle
  * @returns {Uint8Array} The shuffled array (which was also updated byref)
  */
-
 Deck.shuffle = function(deck) {
-  let index = deck.length;
+  const shuffledDeck = deck.slice();
+
+  let index = shuffledDeck.length;
   while (index !== 0) {
     const randomIndex = Math.floor(Math.random() * index);
     index--;
 
-    const temp = deck[index];
-    deck[index] = deck[randomIndex];
-    deck[randomIndex] = temp;
+    const temp = shuffledDeck[index];
+    shuffledDeck[index] = shuffledDeck[randomIndex];
+    shuffledDeck[randomIndex] = deck[index];
   }
 
-  return deck;
+  return shuffledDeck;
 };
 
 module.exports = Deck;

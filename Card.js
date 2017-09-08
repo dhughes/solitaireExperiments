@@ -35,10 +35,10 @@ Card.newCard = function(value, suit, faceUp) {
  */
 Card.fromString = function(string) {
   string = string.trim();
-  var value = string.substr(1, string.length - 3).trim();
-  var suit = string.substr(string.length - 2, 1);
+  let value = string.substr(1, string.length - 3).trim();
+  let suit = string.substr(string.length - 2, 1);
 
-  var faceUp = string[0] === '[';
+  let faceUp = string[0] === '[';
 
   // are the value and suit unknown?
   if ((value === '?' || value === '??') && suit === '?') {
@@ -92,7 +92,7 @@ Card.numericValue = function(card) {
 Card.value = function(card) {
   if (card === 0 || card === 1) throw new Error('Unknown Value');
 
-  var value = Card.numericValue(card);
+  let value = Card.numericValue(card);
 
   // replace the numeric value with an alpha value where needed
   if (value === 1) {
@@ -127,7 +127,7 @@ Card.numericSuit = function(card) {
 Card.suit = function(card) {
   if (card === 0 || card === 1) throw new Error('Unknown Suit');
 
-  var suit = Card.numericSuit(card);
+  let suit = Card.numericSuit(card);
 
   if (suit === 0) {
     //return "♣";
@@ -154,7 +154,7 @@ Card.suit = function(card) {
 Card.color = function(card) {
   if (card === 0 || card === 1) throw new Error('Unknown Suit');
 
-  var suit = Card.numericSuit(card);
+  let suit = Card.numericSuit(card);
 
   if (suit === 0 || suit === 3) {
     return 0;
