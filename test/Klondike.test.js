@@ -18,10 +18,10 @@ describe('Klondike', () => {
     expect(draw1Game.stateScore).toBe(8);
   });
 
-  test('new Draw 1 game draw count should be 1', () => {
-    // make sure the drawCount is set correctly
-    expect(draw1Game.drawCount).toBe(1);
-  });
+  // test('new Draw 1 game draw count should be 1', () => {
+  //   // make sure the drawCount is set correctly
+  //   expect(draw1Game.drawCount).toBe(1);
+  // });
 
   // test('new Draw 1 game foundations should have default suits', () => {
   //   // make sure the foundation suits should be their default:

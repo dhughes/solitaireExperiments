@@ -4,53 +4,74 @@ const Card = require('./Card');
 
 /**
  * Klondike is an object that can create and manipulate klondike game states.
- * @type {Object}
  */
-Klondike = {};
-
-Klondike.automaticallyCreateStringRepresentation = false;
 
 /**
  * Creates a new, virginal, gameState
  * @return {Object} The new gameState
  */
-Klondike.newGameState = function(drawCount) {
+const newGameState = function(drawCount) {
   // create the game state
-  let data = Uint8Array.ofSize(212).map(i => -1);
-  let piles = Klondike.getPiles(data);
-  let gameState = {
-    data: data, // 13+13+13+13 + 13+14+15+16+17+18+19 + 24 + 24
-    piles: piles,
-    pileLengths: {
-      foundations: Uint8Array.ofSize(4).map(i => -1),
-      tableaux: Uint8Array.ofSize(7).map(i => -1),
-      waste: 0,
-      stock: 0
-    },
-    drawCount: drawCount,
-    stateScore: 0,
-    stringRepresentation: '',
-    foundationSuits: undefined,
-    lowestFoundationValue: 0,
-    hash: 0,
-    won: false
-  };
-
-  Klondike.updatePileLengths(gameState);
-
-  return gameState;
+  const data = Uint8Array.ofSize(212).map(i => -1); // 13+13+13+13 + 13+14+15+16+17+18+19 + 24 + 24
+  return applyWon(
+    applyScore(
+      applyPileLengths(
+        applyPiles({
+          hash: 0,
+          drawCount: drawCount,
+          foundationSuits: undefined,
+          lowestFoundationValue: 0,
+          data: data
+        })
+      )
+    )
+  );
 };
+
+const applyWon = gameState => Object.assign({}, gameState, { won: gameState.stateScore === 104 });
+
+const applyScore = gameState =>
+  Object.assign({}, gameState, {
+    stateScore:
+      gameState.data
+        // filter out only cards that are face up (and not 255) and add 1 for each card
+        .filter(card => card !== 255 && Card.isFaceUp(card))
+        .reduce((score, card) => score + 1, 0) +
+      // add one more point for each card in the foundations
+      gameState.piles.foundations.reduce((score, foundation) => foundation.len(), 0)
+  });
+
+const applyPiles = gameState =>
+  Object.assign({}, gameState, {
+    piles: {
+      foundations: getFoundations(gameState.data),
+      tableaux: getTableaux(gameState.data),
+      waste: gameState.data.subarray(164, 188), // 24
+      stock: gameState.data.subarray(188, 212) // 24
+    }
+  });
+
+const applyPileLengths = gameState =>
+  Object.assign({}, gameState, {
+    pileLengths: {
+      foundations: gameState.piles.foundations.map(foundation => foundation.len()),
+      tableaux: gameState.piles.tableaux.map(tableau => tableau.len()),
+      waste: gameState.piles.waste.len(),
+      stock: gameState.piles.stock.len()
+    }
+  });
 
 /**
  * Creates and deals a new game
  * @param drawCount
  */
-Klondike.newGame = function(drawCount) {
+const newGame = function(drawCount) {
   // create and shuffle a new deck
   let cards = Deck.shuffle(Deck.newDeck());
 
   // create the game state
-  let gameState = Klondike.newGameState(drawCount);
+  let gameState = newGameState(drawCount);
+  console.log(gameState);
 
   // figure out what piles we've got
   let piles = gameState.piles;
@@ -83,7 +104,7 @@ Klondike.newGame = function(drawCount) {
   }
 
   // set the calculated values in the gameState
-  Klondike.updateState(gameState);
+  updateState(gameState);
 
   // return the gameState (this can be worked with by any function on this Klondike object.
   return gameState;
@@ -93,7 +114,7 @@ Klondike.newGame = function(drawCount) {
  * Makes a move as specified by the move object.  If this move wins the game the won attribute is set to true!
  * @param {Object} move The move to make.
  */
-Klondike.doMove = function(gameState, move) {
+doMove = function(gameState, move) {
   // default the count, if need be
   move.count = move.count || 1;
 
@@ -151,7 +172,7 @@ Klondike.doMove = function(gameState, move) {
   }
 
   // update the game's state
-  Klondike.updateState(gameState, [{ pile: move.from, index: move.fromIndex }, { pile: move.to, index: move.toIndex }]);
+  updateState(gameState, [{ pile: move.from, index: move.fromIndex }, { pile: move.to, index: move.toIndex }]);
 
   //console.log(gameState.stringRepresentation.indent(1));
 };
@@ -160,33 +181,33 @@ Klondike.doMove = function(gameState, move) {
  * This is a convenience function to refesh all calculated values in a gamestate
  * @param gameState
  */
-Klondike.updateState = function(gameState, specificPiles) {
+updateState = function(gameState, specificPiles) {
   // update the pile lengths
-  Klondike.updatePileLengths(gameState, specificPiles);
+  updatePileLengths(gameState, specificPiles);
 
   // update the score
-  Klondike.updateScore(gameState);
+  updateScore(gameState);
 
   // generate the string representation of this state
-  if (Klondike.automaticallyCreateStringRepresentation) {
-    Klondike.setStringRepresentation(gameState);
-  }
+  // if (automaticallyCreateStringRepresentation) {
+  //   setStringRepresentation(gameState);
+  // }
 
   // populate the set of foundation suits
-  Klondike.setFoundationSuits(gameState);
+  setFoundationSuits(gameState);
 
   // find the lowest foundation value
-  Klondike.setLowestFoundationValue(gameState);
+  setLowestFoundationValue(gameState);
 
   // set the game's hash
-  Klondike.setHash(gameState);
+  setHash(gameState);
 };
 
 /**
  * Updates the score in the gameState
  * @param {Object} gameState The gameState to update.
  */
-Klondike.updateScore = function(gameState) {
+updateScore = function(gameState) {
   gameState.stateScore = 0;
 
   // get the piles
@@ -230,7 +251,7 @@ Klondike.updateScore = function(gameState) {
  * Creates the string representation of a game state
  * @param {Object} gameState The gameState to update
  */
-Klondike.setStringRepresentation = function(gameState) {
+setStringRepresentation = function(gameState) {
   let text = '';
   const piles = gameState.piles;
   const pileLengths = gameState.pileLengths;
@@ -263,7 +284,7 @@ Klondike.setStringRepresentation = function(gameState) {
  * @param {Object} gameState The gameSthat containing the piles
  * @param {Array} specificPiles This is an array of specific piles to update. Each element is an object consisting of {pile, index}.
  */
-Klondike.updatePileLengths = function(gameState, specificPiles) {
+updatePileLengths = function(gameState, specificPiles) {
   let piles = gameState.piles;
 
   if (specificPiles !== undefined) {
@@ -298,25 +319,11 @@ Klondike.updatePileLengths = function(gameState, specificPiles) {
 };
 
 /**
- * Creates a set of subarrays within the game state.cards element for each pile
- * @param gameState
- * @returns {Object} Object with elements (all arrays): foundation0, foundation1, foundation2, foundation3, tableau0, tableau1, tableau2, tableau3, tableau4, tableau5, tableau6, waste, stock
- */
-Klondike.getPiles = function(data) {
-  return {
-    foundations: Klondike.getFoundations(data),
-    tableaux: Klondike.getTableaux(data),
-    waste: data.subarray(164, 188), // 24
-    stock: data.subarray(188, 212) // 24
-  };
-};
-
-/**
  * Gets the foundations from the game
  * @param {Object} gameState The gameState to get the foundations from
  * @return {Array} The array of Foundations
  */
-Klondike.getFoundations = function(data) {
+getFoundations = function(data) {
   return [
     data.subarray(0, 13), // 13
     data.subarray(13, 26), // 13
@@ -330,7 +337,7 @@ Klondike.getFoundations = function(data) {
  * @param  {Object} gameState The gameState to get the tableaux from
  * @return {Array} The array of tableaux
  */
-Klondike.getTableaux = function(data) {
+getTableaux = function(data) {
   return [
     data.subarray(52, 65), // 13
     data.subarray(65, 79), // 14
@@ -346,7 +353,7 @@ Klondike.getTableaux = function(data) {
  * Sets the lowest foundation value into the gameState.
  * @param {Object} gameState The gameState
  */
-Klondike.setLowestFoundationValue = function(gameState) {
+setLowestFoundationValue = function(gameState) {
   // get the foundations we're working with
   let foundations = gameState.piles.foundations;
   let foundationLengths = gameState.pileLengths.foundations;
@@ -375,7 +382,7 @@ Klondike.setLowestFoundationValue = function(gameState) {
  * Sets the hash value of a given gameState
  * @param {Object} gameState the gameState
  */
-Klondike.setHash = function(gameState) {
+setHash = function(gameState) {
   gameState.hash = 0;
 
   for (let i = 0; i < gameState.data.length; i++) {
@@ -395,7 +402,7 @@ Klondike.setHash = function(gameState) {
  * Sets the suits for the foundations based on what's in them already and what we expect.
  * @param {Uint8Array} gameState the gameState
  */
-Klondike.setFoundationSuits = function(gameState) {
+setFoundationSuits = function(gameState) {
   // default order is: c d h s
   let suits = Uint8Array.ofSize(4);
   suits[0] = 0;
@@ -441,4 +448,4 @@ Klondike.setFoundationSuits = function(gameState) {
   gameState.foundationSuits = order;
 };
 
-module.exports = Klondike;
+module.exports = { newGameState, newGame, doMove, setStringRepresentation };
